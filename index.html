@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ballpark Diary</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#1a4a2e;--green-mid:#2d6e47;--green-light:#e8f5ee;
+  --dirt:#c4893a;--dirt-light:#fdf3e7;--cream:#faf8f4;--chalk:#f5f5f0;
+  --ink:#1c1c1c;--muted:#6b6b6b;--border:rgba(0,0,0,0.1);
+  --red:#c0392b;--blue:#1a3a6b;--gold:#f0c040;
+}
+body{font-family:'Source Serif 4',Georgia,serif;background:var(--cream);color:var(--ink);min-height:100vh;padding-bottom:60px}
+.app-header{background:var(--green);padding:20px 24px 16px;position:relative;overflow:hidden}
+.hd{position:absolute;top:-20px;right:-20px;width:140px;height:140px;background:rgba(255,255,255,0.04);transform:rotate(45deg)}
+.eyebrow{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:3px}
+.app-title{font-family:'Oswald',sans-serif;font-size:30px;font-weight:600;color:#fff;letter-spacing:.5px;line-height:1;position:relative}
+.app-title span{color:var(--gold)}
+.subtitle{font-size:12px;font-style:italic;color:rgba(255,255,255,0.55);margin-top:4px;position:relative}
+.nav-tabs{background:#fff;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;position:sticky;top:0;z-index:100}
+.nt{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:12px 16px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-weight:500;transition:color .15s}
+.nt.active{color:var(--green);border-bottom-color:var(--green)}
+.nt:hover:not(.active){color:var(--ink)}
+.main{padding:20px;max-width:900px;margin:0 auto}
+.hidden{display:none!important}
+.section-hdr{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.stat-num{font-family:'Oswald',sans-serif;font-size:26px;font-weight:600;color:var(--green);line-height:1}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px;font-family:'Oswald',sans-serif}
+.loc-banner{background:var(--blue);color:#fff;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:18px;font-size:13px}
+.loc-icon{width:30px;height:30px;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.loc-text{flex:1}
+.loc-text strong{display:block;font-family:'Oswald',sans-serif;letter-spacing:.5px;font-size:14px}
+.loc-text span{color:rgba(255,255,255,0.65);font-size:12px}
+.loc-btn{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 14px;border-radius:5px;font-size:11px;font-family:'Oswald',sans-serif;cursor:pointer;letter-spacing:.5px;white-space:nowrap}
+.game-card{background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.game-card.clickable{cursor:pointer;transition:box-shadow .15s}
+.game-card.clickable:hover{box-shadow:0 3px 12px rgba(0,0,0,0.08)}
+.gc-top{display:flex;align-items:center;padding:13px 16px;gap:12px}
+.badge{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;flex-shrink:0}
+.bw{background:var(--green-light);color:var(--green)}
+.bl{background:#fdecea;color:var(--red)}
+.bu{background:#eef4ff;color:var(--blue)}
+.gi{flex:1;min-width:0}
+.gm{font-family:'Oswald',sans-serif;font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gmt{font-size:11px;color:var(--muted);margin-top:2px;font-style:italic}
+.gsa{text-align:right;flex-shrink:0}
+.gs{font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;line-height:1}
+.gsw{color:var(--green)}.gsl{color:var(--red)}
+.gw2{font-size:11px;color:var(--muted);margin-top:2px}
+.gc-foot{background:var(--chalk);border-top:1px solid var(--border);padding:8px 16px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.fstat{font-size:11px;color:var(--muted)}
+.fstat strong{color:var(--ink);font-weight:500}
+.expand-btn{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s;margin-left:auto}
+.expand-btn:hover{background:var(--green-light);color:var(--green);border-color:var(--green)}
+.expand-btn.has-data{background:var(--green-light);color:var(--green);border-color:rgba(26,74,46,0.3)}
+.box-expander{border-top:1px solid var(--border);padding:16px;background:#fff}
+.form-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px}
+.fsec{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.fsec:first-child{margin-top:0}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.fr1{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px}
+.fg label{display:block;font-size:11px;font-family:'Oswald',sans-serif;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:'Source Serif 4',Georgia,serif;background:var(--cream);color:var(--ink);transition:border-color .15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--green-mid);box-shadow:0 0 0 2px rgba(45,110,71,0.1)}
+.fg textarea{resize:vertical;min-height:70px}
+.ls-wrap{overflow-x:auto;margin-bottom:10px}
+.ls-tbl{border-collapse:collapse;font-size:12px;min-width:100%}
+.ls-tbl th{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:6px 7px;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+.ls-tbl th:first-child{text-align:left}
+.ls-tbl td{padding:6px 7px;text-align:center;border-bottom:1px solid var(--border);background:#fff}
+.ls-tbl td:first-child{text-align:left;font-weight:500;font-size:12px}
+.ls-tbl input[type=number]{width:34px;padding:3px;text-align:center;border:1px solid var(--border);border-radius:3px;font-size:12px;background:var(--cream);font-family:'Oswald',sans-serif}
+.tc{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600}
+.tcw{color:var(--green)}.tcl{color:var(--red)}
+.btn{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:10px 20px;border-radius:6px;cursor:pointer;border:none;transition:all .15s}
+.btn-p{background:var(--green);color:#fff}
+.btn-p:hover{background:var(--green-mid)}
+.btn-s{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-s:hover{background:var(--chalk)}
+.btn-w{background:var(--blue);color:#fff;font-size:11px;padding:6px 13px}
+.btn-w:hover{background:#254d90}
+.btn-sm{padding:6px 14px;font-size:11px}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.det-hdr{background:var(--green);color:#fff;padding:18px 20px;border-radius:10px;margin-bottom:14px;position:relative;overflow:hidden}
+.dh-d{position:absolute;right:-30px;top:-30px;width:100px;height:100px;background:rgba(255,255,255,0.05);transform:rotate(45deg)}
+.det-teams{font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;margin-bottom:4px;position:relative}
+.det-score{font-family:'Oswald',sans-serif;font-size:38px;font-weight:600;color:var(--gold);line-height:1;position:relative}
+.det-meta{font-size:12px;color:rgba(255,255,255,0.6);font-style:italic;margin-top:4px;position:relative}
+.det-sec{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+.wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.wi{text-align:center;padding:10px 8px;background:var(--cream);border-radius:6px}
+.wv{font-family:'Oswald',sans-serif;font-size:17px;font-weight:500;color:var(--blue)}
+.wl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px;font-family:'Oswald',sans-serif}
+.back-btn{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-bottom:14px;background:none;border:none;padding:0}
+.back-btn:hover{color:var(--ink)}
+.inner-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px}
+.it{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:8px 14px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none}
+.it.active{color:var(--green);border-bottom-color:var(--green)}
+.bs-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.bs-tbl th{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:5px 8px;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+.bs-tbl th:first-child{text-align:left}
+.bs-tbl td{padding:6px 8px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.05);font-family:'Oswald',sans-serif;font-size:12px}
+.bs-tbl td:first-child{text-align:left;font-family:'Source Serif 4',serif;font-size:11px}
+.bs-tbl .th-row td{background:var(--chalk);font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:1px;color:var(--muted);font-weight:500;text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);border-top:1px solid var(--border)}
+.yr-hdr{font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--green);padding:9px 14px;background:var(--green-light);border-radius:6px;margin-bottom:8px;margin-top:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.yr-hdr:first-child{margin-top:0}
+.perm-banner{background:var(--dirt-light);border:1px solid rgba(196,137,58,0.3);border-radius:8px;padding:14px 16px;margin-bottom:18px}
+.perm-banner strong{font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:.5px;display:block;margin-bottom:4px;color:var(--dirt)}
+.perm-row{display:flex;gap:9px;margin-top:10px;flex-wrap:wrap}
+.perm-btn{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:7px 14px;border-radius:5px;cursor:pointer;border:none;background:var(--dirt);color:#fff}
+.perm-btn:hover{background:#a8722e}
+.perm-ok{background:var(--green-light);color:var(--green);border:1px solid rgba(26,74,46,0.25);border-radius:5px;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;padding:7px 14px}
+.bucket-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.bucket-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:background .12s}
+.bucket-card:hover{background:var(--chalk)}
+.bucket-card.visited{background:var(--green-light);border-color:rgba(26,74,46,0.2)}
+.bc-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+.bucket-card.visited .bc-check{background:var(--green);border-color:var(--green);color:#fff}
+.bc-info{flex:1;min-width:0}
+.bc-name{font-family:'Oswald',sans-serif;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bc-team{font-size:11px;color:var(--muted);font-style:italic}
+.bc-city{font-size:10px;color:var(--muted)}
+.bc-visits{font-family:'Oswald',sans-serif;font-size:11px;color:var(--green);font-weight:500}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-btn{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s}
+.filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+.save-flash{background:var(--green-light);color:var(--green);border:1px solid rgba(26,74,46,0.3);border-radius:6px;padding:7px 14px;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;text-align:center;margin-top:10px}
+.data-section{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px}
+.data-section h3{font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--ink);margin-bottom:6px}
+.data-section p{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px}
+.data-btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn-export{background:var(--green);color:#fff;font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:10px 20px;border-radius:6px;cursor:pointer;border:none}
+.btn-export:hover{background:var(--green-mid)}
+.btn-import{background:transparent;color:var(--blue);border:1px solid var(--blue);font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:10px 20px;border-radius:6px;cursor:pointer}
+.btn-import:hover{background:#eef4ff}
+.btn-danger{background:transparent;color:var(--red);border:1px solid var(--red);font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:10px 20px;border-radius:6px;cursor:pointer}
+.btn-danger:hover{background:#fdecea}
+.import-drop{border:2px dashed var(--border);border-radius:8px;padding:28px;text-align:center;font-size:13px;color:var(--muted);font-style:italic;margin-top:12px;cursor:pointer;transition:border-color .15s}
+.import-drop:hover,.import-drop.drag-over{border-color:var(--green);color:var(--green)}
+.gh-steps{counter-reset:step;margin-top:4px}
+.gh-step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.gh-step-num{width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;font-family:'Oswald',sans-serif;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.gh-step-text{font-size:13px;color:var(--ink);line-height:1.6}
+.gh-step-text code{background:var(--chalk);padding:1px 6px;border-radius:3px;font-family:monospace;font-size:12px;color:var(--green)}
+.gh-step-text a{color:var(--blue)}
+.flash-msg{background:var(--green-light);color:var(--green);border:1px solid rgba(26,74,46,0.25);border-radius:6px;padding:8px 14px;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;margin-top:10px;text-align:center}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .fr{grid-template-columns:1fr}
+  .fr3{grid-template-columns:1fr 1fr}
+  .wgrid{grid-template-columns:repeat(2,1fr)}
+  .bucket-grid{grid-template-columns:1fr}
+  .main{padding:14px}
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="hd"></div>
+  <div class="eyebrow">Personal Record</div>
+  <div class="app-title">BALLPARK <span>DIARY</span></div>
+  <div class="subtitle">Every game you've ever seen live</div>
+</div>
+
+<div class="nav-tabs">
+  <button class="nt active" onclick="showTab('games')">My Games</button>
+  <button class="nt" onclick="showTab('add')">+ Log Game</button>
+  <button class="nt" onclick="showTab('history')">History</button>
+  <button class="nt" onclick="showTab('bucket')">Bucket List</button>
+  <button class="nt" onclick="showTab('stadiums')">Stadiums</button>
+  <button class="nt" onclick="showTab('data')">Data</button>
+</div>
+
+<div class="main">
+
+<div id="tab-games">
+  <div id="permBanner" class="perm-banner">
+    <strong>Enable features for the best experience</strong>
+    <span style="color:var(--muted);font-size:12px">Location detects when you're at a stadium. Weather auto-fills current conditions from Open-Meteo.</span>
+    <div class="perm-row">
+      <button class="perm-btn" id="locBtn" onclick="requestLocation()">📍 Enable Location</button>
+      <button class="perm-btn" id="wxBtn" onclick="requestWeather()">⛅ Enable Weather</button>
+    </div>
+  </div>
+  <div id="locBanner" class="loc-banner hidden">
+    <div class="loc-icon">📍</div>
+    <div class="loc-text"><strong id="nearName">Near a stadium!</strong><span id="nearDist">You might be at a game</span></div>
+    <button class="loc-btn" onclick="quickLog()">Log It</button>
+  </div>
+  <div class="stats-row" id="statsRow"></div>
+  <div class="section-hdr">Recent games</div>
+  <div id="gameList"></div>
+</div>
+
+<div id="tab-add" class="hidden">
+  <div class="form-card">
+    <div class="fsec">Game Info</div>
+    <div class="fr">
+      <div class="fg"><label>Home Team</label><input type="text" id="f_home" placeholder="Colorado Rockies" oninput="rebuildLS()"/></div>
+      <div class="fg"><label>Away Team</label><input type="text" id="f_away" placeholder="Los Angeles Dodgers" oninput="rebuildLS()"/></div>
+    </div>
+    <div class="fr3">
+      <div class="fg"><label>Date</label><input type="date" id="f_date"/></div>
+      <div class="fg"><label>Stadium</label><input type="text" id="f_stadium" placeholder="Coors Field"/></div>
+      <div class="fg"><label>City</label><input type="text" id="f_city" placeholder="Denver, CO"/></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Seat / Section</label><input type="text" id="f_seat" placeholder="Section 143, Row 12"/></div>
+      <div class="fg"><label>Attended With</label><input type="text" id="f_with" placeholder="Tricia, family..."/></div>
+    </div>
+    <div class="fsec">Weather <button class="btn btn-w" onclick="autoWeather('f_temp','f_cond','f_wind')">Auto-fill from GPS ⛅</button></div>
+    <div class="fr3">
+      <div class="fg"><label>Temp (°F)</label><input type="number" id="f_temp" placeholder="72"/></div>
+      <div class="fg"><label>Condition</label><select id="f_cond"><option value="">Select...</option><option>Clear / Sunny</option><option>Partly Cloudy</option><option>Overcast</option><option>Light Rain</option><option>Rain Delay</option><option>Night Game</option><option>Cold / Windy</option><option>Hot / Humid</option><option>Dome</option></select></div>
+      <div class="fg"><label>Wind</label><input type="text" id="f_wind" placeholder="12mph out"/></div>
+    </div>
+    <div class="fsec">Line Score</div>
+    <div class="ls-wrap"><table class="ls-tbl" id="lsTable"></table></div>
+    <div class="fsec">Box Score — Batting</div>
+    <div class="fr">
+      <div class="fg"><label>Home Batting (Name,AB,R,H,RBI,HR per line)</label><textarea id="f_hbat" placeholder="C. Blackmon,4,2,3,2,1&#10;K. Bryant,4,1,2,1,0"></textarea></div>
+      <div class="fg"><label>Away Batting (Name,AB,R,H,RBI,HR per line)</label><textarea id="f_abat" placeholder="F. Freeman,4,1,2,1,0&#10;M. Betts,4,0,1,0,0"></textarea></div>
+    </div>
+    <div class="fsec">Box Score — Pitching</div>
+    <div class="fr">
+      <div class="fg"><label>Home Pitching (Name,IP,H,R,ER,BB,K per line)</label><textarea id="f_hpit" placeholder="K. Freeland,6.0,4,2,2,1,7"></textarea></div>
+      <div class="fg"><label>Away Pitching (Name,IP,H,R,ER,BB,K per line)</label><textarea id="f_apit" placeholder="G. Cole,7.0,3,1,1,2,9"></textarea></div>
+    </div>
+    <div class="fsec">Notes</div>
+    <div class="fr1"><div class="fg"><label>Memorable Moments</label><textarea id="f_notes" placeholder="What made this game special?"></textarea></div></div>
+    <div class="btn-row">
+      <button class="btn btn-s" onclick="clearForm()">Clear</button>
+      <button class="btn btn-p" onclick="saveGame()">Save Game →</button>
+    </div>
+  </div>
+</div>
+
+<div id="tab-history" class="hidden">
+  <div class="form-card" style="margin-bottom:16px">
+    <div class="fsec">Add Past Game</div>
+    <div class="fr">
+      <div class="fg"><label>Home Team</label><input type="text" id="h_home" placeholder="Colorado Rockies"/></div>
+      <div class="fg"><label>Away Team</label><input type="text" id="h_away" placeholder="Chicago Cubs"/></div>
+    </div>
+    <div class="fr3">
+      <div class="fg"><label>Date</label><input type="date" id="h_date"/></div>
+      <div class="fg"><label>Stadium</label><input type="text" id="h_stadium" placeholder="Coors Field"/></div>
+      <div class="fg"><label>City</label><input type="text" id="h_city" placeholder="Denver, CO"/></div>
+    </div>
+    <div class="fr3">
+      <div class="fg"><label>Home Score</label><input type="number" id="h_hs" placeholder="4" min="0"/></div>
+      <div class="fg"><label>Away Score</label><input type="number" id="h_as" placeholder="3" min="0"/></div>
+      <div class="fg"><label>Attended With</label><input type="text" id="h_with" placeholder="Tricia..."/></div>
+    </div>
+    <div class="fr3">
+      <div class="fg"><label>Temp (°F)</label><input type="number" id="h_temp" placeholder="72"/></div>
+      <div class="fg"><label>Condition</label><select id="h_cond"><option value="">Select...</option><option>Clear / Sunny</option><option>Partly Cloudy</option><option>Overcast</option><option>Light Rain</option><option>Rain Delay</option><option>Night Game</option><option>Cold / Windy</option><option>Hot / Humid</option><option>Dome</option></select></div>
+      <div class="fg"><label>Wind</label><input type="text" id="h_wind" placeholder="12mph out"/></div>
+    </div>
+    <div class="fr1"><div class="fg"><label>Notes</label><textarea id="h_notes" placeholder="What do you remember about this game?"></textarea></div></div>
+    <div class="btn-row">
+      <button class="btn btn-s" onclick="clearHistForm()">Clear</button>
+      <button class="btn btn-p" onclick="saveHistGame()">Add to History →</button>
+    </div>
+  </div>
+  <div class="section-hdr">Games by Year</div>
+  <div class="filter-row" id="yearFilters"></div>
+  <div id="historyList"></div>
+</div>
+
+<div id="tab-bucket" class="hidden">
+  <div class="stats-row" id="bucketStats"></div>
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="setBF('all',this)">All Parks</button>
+    <button class="filter-btn" onclick="setBF('visited',this)">Visited</button>
+    <button class="filter-btn" onclick="setBF('unvisited',this)">Bucket List</button>
+    <input type="text" id="bucketSearch" placeholder="Search stadium, city, or team..." style="padding:6px 11px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--cream);color:var(--ink);outline:none;flex:1;min-width:140px" oninput="renderBucket()"/>
+  </div>
+  <div class="bucket-grid" id="bucketGrid"></div>
+</div>
+
+<div id="tab-stadiums" class="hidden">
+  <div class="stats-row" id="stadiumStats"></div>
+  <div class="section-hdr">Parks visited</div>
+  <div id="stadiumList"></div>
+</div>
+
+<div id="tab-data" class="hidden">
+
+  <div class="data-section">
+    <h3>Export Your Data</h3>
+    <p>Download all your games and bucket list as a JSON file. Use this to back up your data or move it to another device or browser.</p>
+    <div class="data-btn-row">
+      <button class="btn-export" onclick="exportJSON()">⬇ Download ballpark_diary.json</button>
+    </div>
+    <div id="exportFlash" class="flash-msg hidden">✓ Export downloaded!</div>
+  </div>
+
+  <div class="data-section">
+    <h3>Import Data</h3>
+    <p>Restore from a previously exported JSON file. You can choose to <strong>merge</strong> (add to existing games) or <strong>replace</strong> (overwrite everything). Your bucket list will always be merged.</p>
+    <div class="data-btn-row">
+      <button class="btn-import" onclick="document.getElementById('importFileMerge').click()">⬆ Merge Import</button>
+      <button class="btn-danger" onclick="document.getElementById('importFileReplace').click()">⬆ Replace Import</button>
+    </div>
+    <input type="file" id="importFileMerge" accept=".json" style="display:none" onchange="handleImport(this,'merge')"/>
+    <input type="file" id="importFileReplace" accept=".json" style="display:none" onchange="handleImport(this,'replace')"/>
+    <div class="import-drop" id="dropZone" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
+      Or drag &amp; drop a JSON file here
+    </div>
+    <div id="importFlash" class="flash-msg hidden"></div>
+  </div>
+
+  <div class="data-section">
+    <h3>Host on GitHub Pages — Step by Step</h3>
+    <p>Get a free permanent URL (e.g. <code>yourusername.github.io/ballpark-diary</code>) that works on any device.</p>
+    <div class="gh-steps">
+      <div class="gh-step"><div class="gh-step-num">1</div><div class="gh-step-text">Go to <a href="https://github.com" target="_blank">github.com</a> and create a free account if you don't have one.</div></div>
+      <div class="gh-step"><div class="gh-step-num">2</div><div class="gh-step-text">Click the <strong>+</strong> icon (top right) → <strong>New repository</strong>. Name it <code>ballpark-diary</code>. Leave it Public. Click <strong>Create repository</strong>.</div></div>
+      <div class="gh-step"><div class="gh-step-num">3</div><div class="gh-step-text">On the new repo page click <strong>Add file → Upload files</strong>. Drag in your downloaded <code>ballpark_diary.html</code> file.</div></div>
+      <div class="gh-step"><div class="gh-step-num">4</div><div class="gh-step-text">Before uploading, rename the file to <code>index.html</code> — GitHub Pages needs this exact name as the homepage.</div></div>
+      <div class="gh-step"><div class="gh-step-num">5</div><div class="gh-step-text">Scroll down and click <strong>Commit changes</strong>.</div></div>
+      <div class="gh-step"><div class="gh-step-num">6</div><div class="gh-step-text">Go to your repo <strong>Settings → Pages</strong>. Under "Branch" select <code>main</code>, folder <code>/ (root)</code>, and click <strong>Save</strong>.</div></div>
+      <div class="gh-step"><div class="gh-step-num">7</div><div class="gh-step-text">After ~60 seconds your app is live at <code>https://yourusername.github.io/ballpark-diary</code>. Bookmark it on every device!</div></div>
+      <div class="gh-step"><div class="gh-step-num">8</div><div class="gh-step-text"><strong>Moving data between devices:</strong> Export JSON on your old device, open the app URL on your new device, use Merge Import. Done.</div></div>
+    </div>
+  </div>
+
+  <div class="data-section">
+    <h3>Storage Info</h3>
+    <p>Your data is stored in this browser's local storage. It stays here until you clear browser data or import a replacement. Use the export button regularly as a backup.</p>
+    <div id="storageInfo" style="font-size:13px;color:var(--muted)"></div>
+  </div>
+
+</div>
+
+<div id="tab-detail" class="hidden">
+  <button class="back-btn" onclick="goBack()">← Back</button>
+  <div id="detailContent"></div>
+</div>
+
+</div>
+
+<script>
+const MLB_PARKS=[
+  {name:"Angel Stadium",city:"Anaheim, CA",teams:"Los Angeles Angels",lat:33.8003,lon:-117.8827},
+  {name:"Chase Field",city:"Phoenix, AZ",teams:"Arizona Diamondbacks",lat:33.4455,lon:-112.0667},
+  {name:"Truist Park",city:"Cumberland, GA",teams:"Atlanta Braves",lat:33.8907,lon:-84.4677},
+  {name:"Oriole Park at Camden Yards",city:"Baltimore, MD",teams:"Baltimore Orioles",lat:39.2838,lon:-76.6216},
+  {name:"Fenway Park",city:"Boston, MA",teams:"Boston Red Sox",lat:42.3467,lon:-71.0972},
+  {name:"Wrigley Field",city:"Chicago, IL",teams:"Chicago Cubs",lat:41.9484,lon:-87.6553},
+  {name:"Guaranteed Rate Field",city:"Chicago, IL",teams:"Chicago White Sox",lat:41.8300,lon:-87.6338},
+  {name:"Great American Ball Park",city:"Cincinnati, OH",teams:"Cincinnati Reds",lat:39.0979,lon:-84.5082},
+  {name:"Progressive Field",city:"Cleveland, OH",teams:"Cleveland Guardians",lat:41.4962,lon:-81.6852},
+  {name:"Coors Field",city:"Denver, CO",teams:"Colorado Rockies",lat:39.7559,lon:-104.9942},
+  {name:"Comerica Park",city:"Detroit, MI",teams:"Detroit Tigers",lat:42.3390,lon:-83.0485},
+  {name:"Minute Maid Park",city:"Houston, TX",teams:"Houston Astros",lat:29.7572,lon:-95.3552},
+  {name:"Kauffman Stadium",city:"Kansas City, MO",teams:"Kansas City Royals",lat:39.0517,lon:-94.4803},
+  {name:"Dodger Stadium",city:"Los Angeles, CA",teams:"Los Angeles Dodgers",lat:34.0739,lon:-118.2400},
+  {name:"loanDepot park",city:"Miami, FL",teams:"Miami Marlins",lat:25.7781,lon:-80.2197},
+  {name:"American Family Field",city:"Milwaukee, WI",teams:"Milwaukee Brewers",lat:43.0281,lon:-87.9712},
+  {name:"Target Field",city:"Minneapolis, MN",teams:"Minnesota Twins",lat:44.9817,lon:-93.2775},
+  {name:"Citi Field",city:"Queens, NY",teams:"New York Mets",lat:40.7571,lon:-73.8458},
+  {name:"Yankee Stadium",city:"Bronx, NY",teams:"New York Yankees",lat:40.8296,lon:-73.9262},
+  {name:"Oakland Coliseum",city:"Oakland, CA",teams:"Oakland Athletics",lat:37.7516,lon:-122.2005},
+  {name:"Citizens Bank Park",city:"Philadelphia, PA",teams:"Philadelphia Phillies",lat:39.9057,lon:-75.1665},
+  {name:"PNC Park",city:"Pittsburgh, PA",teams:"Pittsburgh Pirates",lat:40.4468,lon:-80.0057},
+  {name:"Petco Park",city:"San Diego, CA",teams:"San Diego Padres",lat:32.7073,lon:-117.1566},
+  {name:"Oracle Park",city:"San Francisco, CA",teams:"San Francisco Giants",lat:37.7786,lon:-122.3893},
+  {name:"T-Mobile Park",city:"Seattle, WA",teams:"Seattle Mariners",lat:47.5914,lon:-122.3325},
+  {name:"Busch Stadium",city:"St. Louis, MO",teams:"St. Louis Cardinals",lat:38.6226,lon:-90.1928},
+  {name:"Tropicana Field",city:"St. Petersburg, FL",teams:"Tampa Bay Rays",lat:27.7682,lon:-82.6534},
+  {name:"Globe Life Field",city:"Arlington, TX",teams:"Texas Rangers",lat:32.7512,lon:-97.0832},
+  {name:"Rogers Centre",city:"Toronto, ON",teams:"Toronto Blue Jays",lat:43.6414,lon:-79.3894},
+  {name:"Nationals Park",city:"Washington, D.C.",teams:"Washington Nationals",lat:38.8730,lon:-77.0074},
+  {name:"Tokyo Dome",city:"Tokyo, Japan",teams:"Yomiuri Giants / NPB",lat:35.7056,lon:139.7517},
+];
+
+const WX={"Clear / Sunny":"☀️","Partly Cloudy":"⛅","Overcast":"☁️","Light Rain":"🌦️","Rain Delay":"🌧️","Night Game":"🌙","Cold / Windy":"🌬️","Hot / Humid":"🥵","Dome":"🏟️"};
+
+let games=[],bucket={},permState={loc:false,wx:false},prevTab='games',bfVal='all',activeYear='all';
+try{const s=localStorage.getItem('bpd_v1');if(s)games=JSON.parse(s)}catch(e){}
+try{const b=localStorage.getItem('bpd_v1_bucket');if(b)bucket=JSON.parse(b)}catch(e){}
+try{const p=localStorage.getItem('bpd_v1_perm');if(p)permState=JSON.parse(p)}catch(e){}
+
+function saveGames(){try{localStorage.setItem('bpd_v1',JSON.stringify(games))}catch(e){}}
+function saveBucket(){try{localStorage.setItem('bpd_v1_bucket',JSON.stringify(bucket))}catch(e){}}
+function savePerm(){try{localStorage.setItem('bpd_v1_perm',JSON.stringify(permState))}catch(e){}}
+
+function requestLocation(){
+  if(!navigator.geolocation){alert('Location not supported by your browser.');return}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    permState.loc=true;savePerm();updatePermBanner();
+    const {latitude:lat,longitude:lon}=pos.coords;
+    let nearest=null,nd=999;
+    MLB_PARKS.forEach(s=>{const d=hav(lat,lon,s.lat,s.lon);if(d<nd){nd=d;nearest=s}});
+    if(nearest&&nd<0.35){
+      document.getElementById('nearName').textContent=nearest.name;
+      document.getElementById('nearDist').textContent=`${Math.round(nd*5280)} feet away — tap to log!`;
+      document.getElementById('locBanner').classList.remove('hidden');
+      document.getElementById('f_stadium').value=nearest.name;
+      document.getElementById('f_city').value=nearest.city;
+    }
+  },err=>{alert(err.code===1?'Location permission denied. Please allow location access in your browser settings and try again.':'Could not determine your location. Please try again.')},{enableHighAccuracy:true,timeout:12000});
+}
+
+function requestWeather(){
+  if(!permState.loc){alert('Please enable Location first so we can get weather for your position.');return}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    permState.wx=true;savePerm();updatePermBanner();
+    doWeatherFetch(pos.coords.latitude,pos.coords.longitude,'f_temp','f_cond','f_wind');
+  },()=>alert('Could not get location for weather.'));
+}
+
+function autoWeather(tId,cId,wId){
+  if(!permState.loc&&!permState.wx){alert('Please enable Location & Weather permissions from the My Games tab first.');return}
+  if(!navigator.geolocation){doWeatherFetch(39.7559,-104.9942,tId,cId,wId);return}
+  navigator.geolocation.getCurrentPosition(pos=>doWeatherFetch(pos.coords.latitude,pos.coords.longitude,tId,cId,wId),()=>doWeatherFetch(39.7559,-104.9942,tId,cId,wId));
+}
+
+function doWeatherFetch(lat,lon,tId,cId,wId){
+  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit&forecast_days=1`)
+    .then(r=>r.json()).then(d=>{
+      const cw=d.current_weather;
+      const temp=Math.round(cw.temperature);
+      const wspd=Math.round(cw.windspeed);
+      const dirs=['N','NE','E','SE','S','SW','W','NW'];
+      const dir=dirs[Math.round(cw.winddirection/45)%8];
+      const wmo=cw.weathercode;
+      let cond='Clear / Sunny';
+      if(wmo>=95)cond='Rain Delay';
+      else if(wmo>=51)cond='Light Rain';
+      else if(wmo>=45)cond='Overcast';
+      else if(wmo>=1)cond='Partly Cloudy';
+      if(temp<45)cond='Cold / Windy';
+      if(temp>90&&wmo<=2)cond='Hot / Humid';
+      const h=new Date().getHours();
+      if(h>=20||h<6)cond='Night Game';
+      const te=document.getElementById(tId),ce=document.getElementById(cId),we=document.getElementById(wId);
+      if(te)te.value=temp;if(ce)ce.value=cond;if(we)we.value=`${wspd}mph ${dir}`;
+    }).catch(()=>{
+      const te=document.getElementById(tId),ce=document.getElementById(cId),we=document.getElementById(wId);
+      if(te)te.value=72;if(ce)ce.value='Clear / Sunny';if(we)we.value='8mph out';
+      alert('Could not fetch live weather. Please fill in manually.');
+    });
+}
+
+function updatePermBanner(){
+  const b=document.getElementById('permBanner');
+  if(permState.loc&&permState.wx){b.style.display='none';return}
+  const lb=document.getElementById('locBtn'),wb=document.getElementById('wxBtn');
+  if(permState.loc&&lb){lb.className='perm-ok';lb.textContent='📍 Location On';lb.onclick=null}
+  if(permState.wx&&wb){wb.className='perm-ok';wb.textContent='⛅ Weather On';wb.onclick=null}
+}
+
+function hav(la1,lo1,la2,lo2){
+  const R=3958.8,dL=(la2-la1)*Math.PI/180,dl=(lo2-lo1)*Math.PI/180;
+  const a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dl/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function quickLog(){showTab('add')}
+function rebuildLS(){buildLS('lsTable','f_home','f_away','ls')}
+
+function buildLS(tblId,homeId,awayId,pfx){
+  const tbl=document.getElementById(tblId);if(!tbl)return;
+  const home=document.getElementById(homeId)?.value||'Home';
+  const away=document.getElementById(awayId)?.value||'Away';
+  let h='<tr><th>Team</th>';
+  for(let i=1;i<=9;i++)h+=`<th>${i}</th>`;
+  h+='<th>R</th><th>H</th><th>E</th></tr>';
+  ['home','away'].forEach(s=>{
+    const lbl=(s==='home'?home:away).split(' ').slice(-1)[0];
+    h+=`<tr><td>${lbl}</td>`;
+    for(let i=0;i<9;i++)h+=`<td><input type="number" min="0" max="20" id="${pfx}_${s}_${i}" oninput="updLS('${pfx}')"></td>`;
+    h+=`<td class="tc" id="${pfx}_${s}_R">–</td><td><input type="number" min="0" id="${pfx}_${s}_H" style="width:30px;padding:3px;text-align:center;border:1px solid var(--border);border-radius:3px;font-size:11px;background:var(--cream)"></td><td><input type="number" min="0" id="${pfx}_${s}_E" style="width:30px;padding:3px;text-align:center;border:1px solid var(--border);border-radius:3px;font-size:11px;background:var(--cream)"></td></tr>`;
+  });
+  tbl.innerHTML=h;
+}
+
+function updLS(pfx){
+  ['home','away'].forEach(s=>{
+    let t=0;
+    for(let i=0;i<9;i++){const v=parseInt(document.getElementById(`${pfx}_${s}_${i}`)?.value||'');if(!isNaN(v))t+=v}
+    const el=document.getElementById(`${pfx}_${s}_R`);if(el)el.textContent=t;
+  });
+}
+
+function parseCSV(txt){
+  if(!txt||!txt.trim())return[];
+  return txt.trim().split('\n').filter(l=>l.trim()).map(l=>l.split(',').map(s=>s.trim()));
+}
+
+function fmtDate(d){return d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''}
+
+function saveGame(){
+  const home=document.getElementById('f_home').value.trim();
+  const away=document.getElementById('f_away').value.trim();
+  const date=document.getElementById('f_date').value;
+  if(!home||!away||!date){alert('Please fill in Home Team, Away Team, and Date.');return}
+  const inn={home:[],away:[]};
+  for(let i=0;i<9;i++){
+    inn.home.push(parseInt(document.getElementById(`ls_home_${i}`)?.value||'0')||0);
+    inn.away.push(parseInt(document.getElementById(`ls_away_${i}`)?.value||'0')||0);
+  }
+  games.push({
+    id:Date.now(),home,away,date,
+    stadium:document.getElementById('f_stadium').value.trim(),
+    city:document.getElementById('f_city').value.trim(),
+    seat:document.getElementById('f_seat').value.trim(),
+    with:document.getElementById('f_with').value.trim(),
+    homeScore:inn.home.reduce((a,b)=>a+b,0),
+    awayScore:inn.away.reduce((a,b)=>a+b,0),
+    temp:document.getElementById('f_temp').value?parseInt(document.getElementById('f_temp').value):null,
+    condition:document.getElementById('f_cond').value,
+    wind:document.getElementById('f_wind').value.trim(),
+    innings:inn,
+    homeBatting:parseCSV(document.getElementById('f_hbat').value),
+    awayBatting:parseCSV(document.getElementById('f_abat').value),
+    homePitching:parseCSV(document.getElementById('f_hpit').value),
+    awayPitching:parseCSV(document.getElementById('f_apit').value),
+    notes:document.getElementById('f_notes').value.trim(),
+    isPast:false
+  });
+  saveGames();clearForm();showTab('games');
+}
+
+function saveHistGame(){
+  const home=document.getElementById('h_home').value.trim();
+  const away=document.getElementById('h_away').value.trim();
+  const date=document.getElementById('h_date').value;
+  if(!home||!away||!date){alert('Please fill in Home Team, Away Team, and Date.');return}
+  games.push({
+    id:Date.now(),home,away,date,
+    stadium:document.getElementById('h_stadium').value.trim(),
+    city:document.getElementById('h_city').value.trim(),
+    seat:'',
+    with:document.getElementById('h_with').value.trim(),
+    homeScore:parseInt(document.getElementById('h_hs').value)||0,
+    awayScore:parseInt(document.getElementById('h_as').value)||0,
+    temp:document.getElementById('h_temp').value?parseInt(document.getElementById('h_temp').value):null,
+    condition:document.getElementById('h_cond').value,
+    wind:document.getElementById('h_wind').value.trim(),
+    innings:{home:[],away:[]},
+    homeBatting:[],awayBatting:[],homePitching:[],awayPitching:[],
+    notes:document.getElementById('h_notes').value.trim(),
+    isPast:true
+  });
+  saveGames();clearHistForm();renderHistory();
+}
+
+function clearForm(){
+  ['f_home','f_away','f_date','f_stadium','f_city','f_seat','f_with','f_temp','f_wind','f_hbat','f_abat','f_hpit','f_apit','f_notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
+  document.getElementById('f_cond').value='';buildLS('lsTable','f_home','f_away','ls');
+}
+function clearHistForm(){
+  ['h_home','h_away','h_date','h_stadium','h_city','h_hs','h_as','h_with','h_temp','h_wind','h_notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
+  document.getElementById('h_cond').value='';
+}
+
+function gameCardHTML(g,showExpand){
+  const hw=g.homeScore>g.awayScore,aw=g.awayScore>g.homeScore;
+  const res=hw||aw?(hw?'W':'L'):'–';
+  const bc=hw?'bw':aw?'bl':'bu';
+  const sc=hw?'gsw':'gsl';
+  const score=g.homeScore!=null?`${g.awayScore}–${g.homeScore}`:'TBD';
+  const wx=WX[g.condition]||'';
+  const foot=[];
+  if(g.temp)foot.push(`<span class="fstat"><strong>${g.temp}°F</strong> ${wx}</span>`);
+  if(g.condition)foot.push(`<span class="fstat">${g.condition}</span>`);
+  if(g.with)foot.push(`<span class="fstat">with <strong>${g.with}</strong></span>`);
+  const hasBoxData=g.homeBatting&&g.homeBatting.length>0;
+  const hasInnData=g.innings&&g.innings.home&&g.innings.home.length>0;
+  const hasAny=hasBoxData||hasInnData;
+  if(showExpand){
+    foot.push(`<button class="expand-btn${hasAny?' has-data':''}" onclick="event.stopPropagation();toggleExpander(${g.id})">${hasAny?'Edit Box Score':'+ Add Box Score'}</button>`);
+  }
+  return `<div class="game-card${showExpand?'':' clickable'}" ${showExpand?'':` onclick="showDetail(${g.id})"`} id="gc_${g.id}">
+    <div class="gc-top">
+      <div class="badge ${bc}">${res}</div>
+      <div class="gi"><div class="gm">${g.away} @ ${g.home}</div><div class="gmt">${fmtDate(g.date)} · ${g.stadium||''}</div></div>
+      <div class="gsa"><div class="gs ${sc}">${score}</div><div class="gw2">${g.condition||''}</div></div>
+    </div>
+    ${foot.length?`<div class="gc-foot">${foot.join('')}</div>`:''}
+    <div id="exp_${g.id}" class="hidden"></div>
+  </div>`;
+}
+
+function toggleExpander(id){
+  const g=games.find(x=>x.id===id);if(!g)return;
+  const el=document.getElementById(`exp_${id}`);if(!el)return;
+  if(!el.classList.contains('hidden')){el.classList.add('hidden');el.innerHTML='';return}
+  el.classList.remove('hidden');
+  const hbVal=(g.homeBatting||[]).map(r=>r.join(',')).join('\n');
+  const abVal=(g.awayBatting||[]).map(r=>r.join(',')).join('\n');
+  const hpVal=(g.homePitching||[]).map(r=>r.join(',')).join('\n');
+  const apVal=(g.awayPitching||[]).map(r=>r.join(',')).join('\n');
+  el.innerHTML=`<div class="box-expander">
+    <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Line Score</div>
+    <div class="ls-wrap"><table class="ls-tbl" id="exp_ls_${id}"></table></div>
+    <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:14px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border)">Batting (Name,AB,R,H,RBI,HR per line)</div>
+    <div class="fr">
+      <div class="fg"><label>${g.home}</label><textarea id="exp_hbat_${id}" style="min-height:80px">${hbVal}</textarea></div>
+      <div class="fg"><label>${g.away}</label><textarea id="exp_abat_${id}" style="min-height:80px">${abVal}</textarea></div>
+    </div>
+    <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:10px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border)">Pitching (Name,IP,H,R,ER,BB,K per line)</div>
+    <div class="fr">
+      <div class="fg"><label>${g.home}</label><textarea id="exp_hpit_${id}" style="min-height:80px">${hpVal}</textarea></div>
+      <div class="fg"><label>${g.away}</label><textarea id="exp_apit_${id}" style="min-height:80px">${apVal}</textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-s btn-sm" onclick="toggleExpander(${id})">Cancel</button>
+      <button class="btn btn-p btn-sm" onclick="saveExpander(${id})">Save Box Score →</button>
+    </div>
+    <div id="exp_flash_${id}" class="hidden save-flash">✓ Box score saved!</div>
+  </div>`;
+  buildLS(`exp_ls_${id}`,'_x','_y',`exp_ls${id}`);
+  const tbl=document.getElementById(`exp_ls_${id}`);
+  if(tbl){
+    const rows=tbl.querySelectorAll('tr');
+    if(rows[1])rows[1].querySelector('td').textContent=g.away.split(' ').slice(-1)[0];
+    if(rows[2])rows[2].querySelector('td').textContent=g.home.split(' ').slice(-1)[0];
+    const hasInn=g.innings&&g.innings.home&&g.innings.home.length>0;
+    if(hasInn){
+      ['home','away'].forEach(s=>{
+        const inns=(s==='home'?g.innings.home:g.innings.away)||[];
+        inns.forEach((v,i)=>{const inp=document.getElementById(`exp_ls${id}_${s}_${i}`);if(inp)inp.value=v});
+        updLS(`exp_ls${id}`);
+      });
+    }
+  }
+}
+
+function saveExpander(id){
+  const g=games.find(x=>x.id===id);if(!g)return;
+  const inn={home:[],away:[]};
+  for(let i=0;i<9;i++){
+    inn.home.push(parseInt(document.getElementById(`exp_ls${id}_home_${i}`)?.value||'0')||0);
+    inn.away.push(parseInt(document.getElementById(`exp_ls${id}_away_${i}`)?.value||'0')||0);
+  }
+  const newHS=inn.home.reduce((a,b)=>a+b,0);
+  const newAS=inn.away.reduce((a,b)=>a+b,0);
+  if(newHS>0||newAS>0){g.homeScore=newHS;g.awayScore=newAS}
+  g.innings=inn;
+  g.homeBatting=parseCSV(document.getElementById(`exp_hbat_${id}`)?.value||'');
+  g.awayBatting=parseCSV(document.getElementById(`exp_abat_${id}`)?.value||'');
+  g.homePitching=parseCSV(document.getElementById(`exp_hpit_${id}`)?.value||'');
+  g.awayPitching=parseCSV(document.getElementById(`exp_apit_${id}`)?.value||'');
+  saveGames();
+  const flash=document.getElementById(`exp_flash_${id}`);
+  if(flash){flash.classList.remove('hidden');setTimeout(()=>{flash.classList.add('hidden');toggleExpander(id);renderHistory()},1400)}
+}
+
+function renderGames(){
+  updatePermBanner();
+  const sorted=[...games].filter(g=>!g.isPast).sort((a,b)=>b.date.localeCompare(a.date));
+  const stadSet=new Set(games.map(g=>g.stadium).filter(Boolean));
+  const citySet=new Set(games.map(g=>g.city).filter(Boolean));
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${games.length}</div><div class="stat-lbl">Total Games</div></div>
+    <div class="stat-card"><div class="stat-num">${stadSet.size}</div><div class="stat-lbl">Parks</div></div>
+    <div class="stat-card"><div class="stat-num">${citySet.size}</div><div class="stat-lbl">Cities</div></div>
+    <div class="stat-card"><div class="stat-num">${games.filter(g=>g.isPast).length}</div><div class="stat-lbl">History</div></div>`;
+  document.getElementById('gameList').innerHTML=sorted.length===0?'<p style="color:var(--muted);font-style:italic;text-align:center;padding:30px 0">No recent games logged yet. Hit "+ Log Game" to add one!</p>':sorted.map(g=>gameCardHTML(g,false)).join('');
+}
+
+function renderHistory(){
+  const hist=[...games].filter(g=>g.isPast).sort((a,b)=>b.date.localeCompare(a.date));
+  const years=[...new Set(hist.map(g=>g.date?g.date.split('-')[0]:''))].filter(Boolean).sort((a,b)=>b-a);
+  const fr=document.getElementById('yearFilters');
+  fr.innerHTML=`<button class="filter-btn${activeYear==='all'?' active':''}" onclick="setYF('all',this)">All</button>`+
+    years.map(y=>`<button class="filter-btn${activeYear===y?' active':''}" onclick="setYF('${y}',this)">${y} (${hist.filter(g=>g.date.startsWith(y)).length})</button>`).join('');
+  const filtered=activeYear==='all'?hist:hist.filter(g=>g.date.startsWith(activeYear));
+  if(!filtered.length){document.getElementById('historyList').innerHTML='<p style="color:var(--muted);font-style:italic;text-align:center;padding:30px 0">No history games yet. Use the form above to add past games!</p>';return}
+  if(activeYear==='all'){
+    document.getElementById('historyList').innerHTML=years.map(y=>{
+      const yg=hist.filter(g=>g.date.startsWith(y));
+      return `<div class="yr-hdr" onclick="toggleYr('yr_${y}')"><span>${y} Season</span><span>${yg.length} game${yg.length!==1?'s':''} ▾</span></div><div id="yr_${y}">${yg.map(g=>gameCardHTML(g,true)).join('')}</div>`;
+    }).join('');
+  } else {
+    document.getElementById('historyList').innerHTML=filtered.map(g=>gameCardHTML(g,true)).join('');
+  }
+}
+
+function setYF(yr,btn){
+  activeYear=yr;
+  document.querySelectorAll('#yearFilters .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');renderHistory();
+}
+function toggleYr(id){const el=document.getElementById(id);if(el)el.style.display=el.style.display==='none'?'':'none'}
+
+function setBF(v,btn){
+  bfVal=v;
+  document.querySelectorAll('.filter-btn[onclick*="setBF"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');renderBucket();
+}
+
+function renderBucket(){
+  const q=(document.getElementById('bucketSearch')?.value||'').toLowerCase();
+  const vis=Object.keys(bucket).filter(k=>bucket[k]);
+  const tot=MLB_PARKS.length;
+  document.getElementById('bucketStats').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${vis.length}</div><div class="stat-lbl">Visited</div></div>
+    <div class="stat-card"><div class="stat-num">${tot-vis.length}</div><div class="stat-lbl">Remaining</div></div>
+    <div class="stat-card"><div class="stat-num">${Math.round(vis.length/tot*100)}%</div><div class="stat-lbl">Complete</div></div>
+    <div class="stat-card"><div class="stat-num">${tot}</div><div class="stat-lbl">Total Parks</div></div>`;
+  const cnt={};games.forEach(g=>{if(g.stadium)cnt[g.stadium]=(cnt[g.stadium]||0)+1});
+  let parks=MLB_PARKS;
+  if(bfVal==='visited')parks=parks.filter(p=>bucket[p.name]);
+  if(bfVal==='unvisited')parks=parks.filter(p=>!bucket[p.name]);
+  if(q)parks=parks.filter(p=>p.name.toLowerCase().includes(q)||p.city.toLowerCase().includes(q)||p.teams.toLowerCase().includes(q));
+  document.getElementById('bucketGrid').innerHTML=parks.map(p=>{
+    const v=bucket[p.name];const c=cnt[p.name]||0;
+    return `<div class="bucket-card${v?' visited':''}" onclick="toggleBucket('${p.name.replace(/'/g,"\\'")}')">
+      <div class="bc-check">${v?'✓':''}</div>
+      <div class="bc-info">
+        <div class="bc-name">${p.name}</div>
+        <div class="bc-team">${p.teams}</div>
+        <div class="bc-city">${p.city}${c>0?` · <span class="bc-visits">${c} visit${c!==1?'s':''}</span>`:''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleBucket(name){bucket[name]=!bucket[name];saveBucket();renderBucket()}
+
+function renderStadiums(){
+  const sm={};games.forEach(g=>{if(!g.stadium)return;if(!sm[g.stadium])sm[g.stadium]={name:g.stadium,city:g.city,games:[]};sm[g.stadium].games.push(g)});
+  const entries=Object.values(sm);
+  document.getElementById('stadiumStats').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${entries.length}</div><div class="stat-lbl">Parks</div></div>
+    <div class="stat-card"><div class="stat-num">${games.length}</div><div class="stat-lbl">Games</div></div>
+    <div class="stat-card"><div class="stat-num">${entries.length>0?Math.max(...entries.map(e=>e.games.length)):0}</div><div class="stat-lbl">Most Visits</div></div>
+    <div class="stat-card"><div class="stat-num">${new Set(entries.map(e=>e.city)).size}</div><div class="stat-lbl">Cities</div></div>`;
+  document.getElementById('stadiumList').innerHTML=!entries.length?'<p style="color:var(--muted);font-style:italic;text-align:center;padding:30px 0">Log a game to see your stadiums here!</p>':
+    entries.sort((a,b)=>b.games.length-a.games.length).map(e=>`<div class="game-card">
+      <div class="gc-top">
+        <div class="badge bu" style="font-size:18px">🏟</div>
+        <div class="gi"><div class="gm">${e.name}</div><div class="gmt">${e.city||''}</div></div>
+        <div class="gsa"><div class="gs" style="color:var(--blue)">${e.games.length}</div><div class="gw2">${e.games.length===1?'game':'games'}</div></div>
+      </div>
+      <div class="gc-foot">${e.games.sort((a,b)=>b.date.localeCompare(a.date)).map(g=>`<span class="fstat">${fmtDate(g.date)}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+function showDetail(id){
+  const g=games.find(x=>x.id===id);if(!g)return;
+  const hw=g.homeScore>g.awayScore,aw=g.awayScore>g.homeScore;
+  const dateStr=g.date?new Date(g.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}):'';
+  const inn=g.innings||{home:[],away:[]};
+  let lsHTML='';
+  if(inn.home&&inn.home.length){
+    let hdr='<tr><th>Team</th>';for(let i=1;i<=inn.home.length;i++)hdr+=`<th>${i}</th>`;hdr+='<th>R</th><th>H</th><th>E</th></tr>';
+    const hR=inn.home.reduce((a,b)=>a+b,0),aR=inn.away.reduce((a,b)=>a+b,0);
+    lsHTML=`<div class="ls-wrap"><table class="ls-tbl" style="min-width:100%">${hdr}
+      <tr><td>${g.away.split(' ').slice(-1)[0]}</td>${inn.away.map(v=>`<td>${v}</td>`).join('')}<td class="tc ${aw?'tcw':'tcl'}">${aR}</td><td>${(g.awayBatting||[]).reduce((s,r)=>s+parseInt(r[2]||0),0)}</td><td>0</td></tr>
+      <tr><td>${g.home.split(' ').slice(-1)[0]}</td>${inn.home.map(v=>`<td>${v}</td>`).join('')}<td class="tc ${hw?'tcw':'tcl'}">${hR}</td><td>${(g.homeBatting||[]).reduce((s,r)=>s+parseInt(r[2]||0),0)}</td><td>0</td></tr>
+    </table></div>`;
+  }
+  function batTbl(p,t){
+    if(!p||!p.length)return'<p style="color:var(--muted);font-style:italic;font-size:13px;margin-top:6px">No batting data — use History tab to add it.</p>';
+    return`<table class="bs-tbl"><tr class="th-row"><td colspan="7">${t}</td></tr><tr><th>Player</th><th>AB</th><th>R</th><th>H</th><th>RBI</th><th>HR</th><th>AVG</th></tr>${p.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]||0}</td><td>${r[5]||0}</td><td style="color:var(--muted)">${parseInt(r[1])>0?(parseInt(r[3])/parseInt(r[1])).toFixed(3).replace(/^0/,''):'.000'}</td></tr>`).join('')}</table>`;
+  }
+  function pitTbl(p,t){
+    if(!p||!p.length)return'<p style="color:var(--muted);font-style:italic;font-size:13px;margin-top:6px">No pitching data — use History tab to add it.</p>';
+    return`<table class="bs-tbl"><tr class="th-row"><td colspan="7">${t}</td></tr><tr><th>Pitcher</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>K</th></tr>${p.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]||0}</td><td>${r[5]||0}</td><td>${r[6]||0}</td></tr>`).join('')}</table>`;
+  }
+  document.getElementById('detailContent').innerHTML=`
+    <div class="det-hdr"><div class="dh-d"></div>
+      <div class="det-teams">${g.away} @ ${g.home}</div>
+      <div class="det-score">${g.awayScore}–${g.homeScore}</div>
+      <div class="det-meta">${dateStr}${g.seat?' · '+g.seat:''}${g.isPast?' · Past Game':''}</div>
+    </div>
+    <div class="det-sec"><div class="section-hdr">Line score</div>${lsHTML||'<p style="color:var(--muted);font-style:italic;font-size:13px;margin-top:6px">No inning data — use History tab to add it.</p>'}</div>
+    <div class="det-sec"><div class="section-hdr">Weather</div>
+      <div class="wgrid">
+        <div class="wi"><div class="wv">${g.temp||'–'}°</div><div class="wl">Temp</div></div>
+        <div class="wi"><div class="wv" style="font-size:20px">${WX[g.condition]||'–'}</div><div class="wl">${g.condition||'–'}</div></div>
+        <div class="wi"><div class="wv" style="font-size:13px;padding-top:5px">${g.wind||'–'}</div><div class="wl">Wind</div></div>
+        <div class="wi"><div class="wv" style="font-size:12px;padding-top:5px">${g.city||'–'}</div><div class="wl">City</div></div>
+      </div>
+    </div>
+    <div class="det-sec">
+      <div class="inner-tabs">
+        <button class="it active" onclick="swInner('ib','ip',this)">Batting</button>
+        <button class="it" onclick="swInner('ip','ib',this)">Pitching</button>
+      </div>
+      <div id="ib">${batTbl(g.homeBatting,g.home)}<div style="height:12px"></div>${batTbl(g.awayBatting,g.away)}</div>
+      <div id="ip" style="display:none">${pitTbl(g.homePitching,g.home)}<div style="height:12px"></div>${pitTbl(g.awayPitching,g.away)}</div>
+    </div>
+    ${g.notes?`<div class="det-sec"><div class="section-hdr">Notes</div><p style="font-size:14px;font-style:italic;color:var(--muted);line-height:1.8">${g.notes}</p></div>`:''}`;
+  ['games','add','history','bucket','stadiums'].forEach(t=>document.getElementById(`tab-${t}`).classList.add('hidden'));
+  document.getElementById('tab-detail').classList.remove('hidden');
+}
+
+function swInner(show,hide,btn){
+  document.querySelectorAll('.it').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
+  document.getElementById(show).style.display='';document.getElementById(hide).style.display='none';
+}
+
+function exportJSON(){
+  const payload={
+    version:1,
+    exported:new Date().toISOString(),
+    games:games,
+    bucket:bucket
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  const d=new Date().toISOString().split('T')[0];
+  a.download=`ballpark_diary_${d}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  const f=document.getElementById('exportFlash');
+  if(f){f.classList.remove('hidden');setTimeout(()=>f.classList.add('hidden'),2500)}
+}
+
+function handleImport(input,mode){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      applyImport(data,mode);
+    }catch(err){
+      alert('Could not read file. Make sure it is a valid Ballpark Diary JSON export.');
+    }
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  const file=e.dataTransfer.files[0];
+  if(!file||!file.name.endsWith('.json')){alert('Please drop a .json file.');return}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      const mode=confirm('Click OK to MERGE (keep existing + add new)\nClick Cancel to REPLACE (overwrite everything)')?'merge':'replace';
+      applyImport(data,mode);
+    }catch(err){
+      alert('Could not read file. Make sure it is a valid Ballpark Diary JSON export.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function applyImport(data,mode){
+  if(!data.games||!Array.isArray(data.games)){alert('Invalid file format — no games array found.');return}
+  if(mode==='replace'){
+    games=data.games;
+    bucket=data.bucket||{};
+  } else {
+    const existingIds=new Set(games.map(g=>g.id));
+    const newGames=data.games.filter(g=>!existingIds.has(g.id));
+    games=[...games,...newGames];
+    if(data.bucket){Object.keys(data.bucket).forEach(k=>{if(data.bucket[k])bucket[k]=true})}
+  }
+  saveGames();saveBucket();
+  const added=mode==='replace'?data.games.length:(data.games.filter(g=>!new Set(games.map(x=>x.id)).has(g.id)).length);
+  const f=document.getElementById('importFlash');
+  const msg=mode==='replace'?`✓ Replaced with ${data.games.length} games from backup.`:`✓ Merged: ${games.length} total games now in your diary.`;
+  if(f){f.textContent=msg;f.classList.remove('hidden');setTimeout(()=>f.classList.add('hidden'),3500)}
+  renderStorageInfo();
+  renderGames();
+}
+
+function renderStorageInfo(){
+  const el=document.getElementById('storageInfo');if(!el)return;
+  try{
+    const gSize=JSON.stringify(games).length;
+    const bSize=JSON.stringify(bucket).length;
+    const total=gSize+bSize;
+    const kb=(total/1024).toFixed(1);
+    const vis=Object.values(bucket).filter(Boolean).length;
+    el.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px">
+        <div style="background:var(--chalk);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-family:'Oswald',sans-serif;font-size:22px;color:var(--green)">${games.length}</div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;font-family:'Oswald',sans-serif;margin-top:2px">Games stored</div>
+        </div>
+        <div style="background:var(--chalk);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-family:'Oswald',sans-serif;font-size:22px;color:var(--green)">${vis}</div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;font-family:'Oswald',sans-serif;margin-top:2px">Parks checked</div>
+        </div>
+        <div style="background:var(--chalk);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-family:'Oswald',sans-serif;font-size:22px;color:var(--green)">${kb}KB</div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;font-family:'Oswald',sans-serif;margin-top:2px">Storage used</div>
+        </div>
+      </div>`;
+  }catch(e){el.textContent='Could not calculate storage size.'}
+}
+
+
+function showTab(tab){
+  ['games','add','history','bucket','stadiums','data','detail'].forEach(t=>{const el=document.getElementById(`tab-${t}`);if(el)el.classList.add('hidden')});
+  document.querySelectorAll('.nt').forEach(t=>t.classList.remove('active'));
+  const idx={games:0,add:1,history:2,bucket:3,stadiums:4,data:5};
+  const tabs=document.querySelectorAll('.nt');
+  if(tab!=='detail'&&idx[tab]!=null)tabs[idx[tab]].classList.add('active');
+  const el=document.getElementById(`tab-${tab}`);if(el)el.classList.remove('hidden');
+  if(tab==='games')renderGames();
+  if(tab==='add'){buildLS('lsTable','f_home','f_away','ls');document.getElementById('f_date').value=new Date().toISOString().split('T')[0]}
+  if(tab==='history')renderHistory();
+  if(tab==='bucket')renderBucket();
+  if(tab==='stadiums')renderStadiums();
+  if(tab==='data')renderStorageInfo();
+  if(tab!=='detail')prevTab=tab;
+}
+
+function goBack(){showTab(prevTab==='detail'?'games':prevTab)}
+
+MLB_PARKS.forEach(p=>{if(games.some(g=>g.stadium===p.name)&&!bucket[p.name])bucket[p.name]=true});
+saveBucket();
+document.getElementById('f_date').value=new Date().toISOString().split('T')[0];
+updatePermBanner();
+renderGames();
+</script>
+</body>
+</html>
