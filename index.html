@@ -245,10 +245,22 @@ body{font-family:'Source Serif 4',Georgia,serif;background:var(--cream);color:va
 <div id="tab-history" class="hidden">
   <div class="form-card" style="margin-bottom:16px">
     <div class="fsec">Add Past Game</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;font-style:italic">Enter the home team, away team, and date — then hit <strong style="color:var(--green);font-style:normal">Auto-Fill Game Data</strong> and I'll look up the score, weather, stadium, and full box score automatically.</p>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;font-style:italic">Enter the home team and date (away team optional) — hit <strong style="color:var(--green);font-style:normal">✦ Look Up on Baseball Reference</strong> to open the box score in a new tab, then fill in the details below.</p>
     <div class="fr">
-      <div class="fg"><label>Home Team</label><input type="text" id="h_home" placeholder="Home Team"/></div>
-      <div class="fg"><label>Away Team</label><input type="text" id="h_away" placeholder="Away Team"/></div>
+      <div class="fg">
+        <label>Home Team</label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img id="h_home_logo" src="" style="width:32px;height:32px;object-fit:contain;display:none;flex-shrink:0"/>
+          <input type="text" id="h_home" placeholder="Cubs, Rockies, Red Sox..." oninput="updateHistLogo('h_home','h_home_logo')"/>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Away Team <span style="font-weight:400;color:var(--muted);font-size:10px">(optional)</span></label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img id="h_away_logo" src="" style="width:32px;height:32px;object-fit:contain;display:none;flex-shrink:0"/>
+          <input type="text" id="h_away" placeholder="Cubs, Dodgers, Yankees..." oninput="updateHistLogo('h_away','h_away_logo')"/>
+        </div>
+      </div>
     </div>
     <div class="fr3">
       <div class="fg"><label>Date</label><input type="date" id="h_date"/></div>
@@ -256,14 +268,21 @@ body{font-family:'Source Serif 4',Georgia,serif;background:var(--cream);color:va
       <div class="fg"><label>Seat / Section</label><input type="text" id="h_seat" placeholder=""/></div>
     </div>
     <div class="btn-row" style="justify-content:flex-start;margin-top:4px;margin-bottom:0">
-      <button class="btn btn-p" id="autoFillBtn" onclick="autoFillHistory()">✦ Auto-Fill Game Data</button>
+      <button class="btn btn-p" id="autoFillBtn" onclick="autoFillHistory()">✦ Look Up on Baseball Reference</button>
       <button class="btn btn-s" onclick="clearHistForm()">Clear</button>
     </div>
     <div id="h_loading" class="hidden" style="margin-top:14px;padding:12px 16px;background:var(--green-light);border-radius:8px;font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;color:var(--green);text-align:center">
-      <span id="h_loading_msg">Looking up game data...</span>
+      <span id="h_loading_msg">Opening Baseball Reference...</span>
     </div>
     <div id="h_filled" class="hidden">
-      <div style="margin:16px 0 10px;padding:10px 14px;background:var(--green-light);border-radius:6px;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;color:var(--green)">✓ Game data filled in — review and edit anything below before saving.</div>
+      <div style="margin:16px 0 10px;padding:10px 14px;background:var(--green-light);border-radius:6px;display:flex;align-items:center;gap:10px">
+        <div style="flex:1;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;color:var(--green)">Stadium, city, and weather estimated — fill in score and box score from Baseball Reference.</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <img id="h_filled_home_logo" src="" style="width:28px;height:28px;object-fit:contain;display:none"/>
+          <span style="font-family:'Oswald',sans-serif;font-size:11px;color:var(--muted)">vs</span>
+          <img id="h_filled_away_logo" src="" style="width:28px;height:28px;object-fit:contain;display:none"/>
+        </div>
+      </div>
       <div class="fr3">
         <div class="fg"><label>Stadium</label><input type="text" id="h_stadium" placeholder=""/></div>
         <div class="fg"><label>City</label><input type="text" id="h_city" placeholder=""/></div>
@@ -558,131 +577,292 @@ function saveGame(){
   saveGames();clearForm();showTab('games');
 }
 
-const LOAD_MSGS=['Looking up game data...','Searching box scores...','Checking the scorebook...','Almost there...'];
-let loadTick=null;
+const TEAM_DATA={
+  'angels':{full:'Los Angeles Angels',abbr:'laa',espn:'laa',park:'Angel Stadium',city:'Anaheim, CA',dome:false,lat:33.80},
+  'los angeles angels':{full:'Los Angeles Angels',abbr:'laa',espn:'laa',park:'Angel Stadium',city:'Anaheim, CA',dome:false,lat:33.80},
+  'diamondbacks':{full:'Arizona Diamondbacks',abbr:'ari',espn:'ari',park:'Chase Field',city:'Phoenix, AZ',dome:true,lat:33.44},
+  'dbacks':{full:'Arizona Diamondbacks',abbr:'ari',espn:'ari',park:'Chase Field',city:'Phoenix, AZ',dome:true,lat:33.44},
+  'arizona diamondbacks':{full:'Arizona Diamondbacks',abbr:'ari',espn:'ari',park:'Chase Field',city:'Phoenix, AZ',dome:true,lat:33.44},
+  'braves':{full:'Atlanta Braves',abbr:'atl',espn:'atl',park:'Truist Park',city:'Cumberland, GA',dome:false,lat:33.89},
+  'atlanta braves':{full:'Atlanta Braves',abbr:'atl',espn:'atl',park:'Truist Park',city:'Cumberland, GA',dome:false,lat:33.89},
+  'orioles':{full:'Baltimore Orioles',abbr:'bal',espn:'bal',park:'Oriole Park at Camden Yards',city:'Baltimore, MD',dome:false,lat:39.28},
+  'baltimore orioles':{full:'Baltimore Orioles',abbr:'bal',espn:'bal',park:'Oriole Park at Camden Yards',city:'Baltimore, MD',dome:false,lat:39.28},
+  'red sox':{full:'Boston Red Sox',abbr:'bos',espn:'bos',park:'Fenway Park',city:'Boston, MA',dome:false,lat:42.35},
+  'boston red sox':{full:'Boston Red Sox',abbr:'bos',espn:'bos',park:'Fenway Park',city:'Boston, MA',dome:false,lat:42.35},
+  'cubs':{full:'Chicago Cubs',abbr:'chn',espn:'chc',park:'Wrigley Field',city:'Chicago, IL',dome:false,lat:41.95},
+  'chicago cubs':{full:'Chicago Cubs',abbr:'chn',espn:'chc',park:'Wrigley Field',city:'Chicago, IL',dome:false,lat:41.95},
+  'white sox':{full:'Chicago White Sox',abbr:'cha',espn:'chw',park:'Guaranteed Rate Field',city:'Chicago, IL',dome:false,lat:41.83},
+  'chicago white sox':{full:'Chicago White Sox',abbr:'cha',espn:'chw',park:'Guaranteed Rate Field',city:'Chicago, IL',dome:false,lat:41.83},
+  'reds':{full:'Cincinnati Reds',abbr:'cin',espn:'cin',park:'Great American Ball Park',city:'Cincinnati, OH',dome:false,lat:39.10},
+  'cincinnati reds':{full:'Cincinnati Reds',abbr:'cin',espn:'cin',park:'Great American Ball Park',city:'Cincinnati, OH',dome:false,lat:39.10},
+  'guardians':{full:'Cleveland Guardians',abbr:'cle',espn:'cle',park:'Progressive Field',city:'Cleveland, OH',dome:false,lat:41.50},
+  'indians':{full:'Cleveland Guardians',abbr:'cle',espn:'cle',park:'Progressive Field',city:'Cleveland, OH',dome:false,lat:41.50},
+  'cleveland guardians':{full:'Cleveland Guardians',abbr:'cle',espn:'cle',park:'Progressive Field',city:'Cleveland, OH',dome:false,lat:41.50},
+  'rockies':{full:'Colorado Rockies',abbr:'col',espn:'col',park:'Coors Field',city:'Denver, CO',dome:false,lat:39.76},
+  'colorado rockies':{full:'Colorado Rockies',abbr:'col',espn:'col',park:'Coors Field',city:'Denver, CO',dome:false,lat:39.76},
+  'tigers':{full:'Detroit Tigers',abbr:'det',espn:'det',park:'Comerica Park',city:'Detroit, MI',dome:false,lat:42.34},
+  'detroit tigers':{full:'Detroit Tigers',abbr:'det',espn:'det',park:'Comerica Park',city:'Detroit, MI',dome:false,lat:42.34},
+  'astros':{full:'Houston Astros',abbr:'hou',espn:'hou',park:'Minute Maid Park',city:'Houston, TX',dome:true,lat:29.76},
+  'houston astros':{full:'Houston Astros',abbr:'hou',espn:'hou',park:'Minute Maid Park',city:'Houston, TX',dome:true,lat:29.76},
+  'royals':{full:'Kansas City Royals',abbr:'kca',espn:'kc',park:'Kauffman Stadium',city:'Kansas City, MO',dome:false,lat:39.05},
+  'kansas city royals':{full:'Kansas City Royals',abbr:'kca',espn:'kc',park:'Kauffman Stadium',city:'Kansas City, MO',dome:false,lat:39.05},
+  'dodgers':{full:'Los Angeles Dodgers',abbr:'lan',espn:'lad',park:'Dodger Stadium',city:'Los Angeles, CA',dome:false,lat:34.07},
+  'los angeles dodgers':{full:'Los Angeles Dodgers',abbr:'lan',espn:'lad',park:'Dodger Stadium',city:'Los Angeles, CA',dome:false,lat:34.07},
+  'marlins':{full:'Miami Marlins',abbr:'mia',espn:'mia',park:'loanDepot park',city:'Miami, FL',dome:true,lat:25.78},
+  'miami marlins':{full:'Miami Marlins',abbr:'mia',espn:'mia',park:'loanDepot park',city:'Miami, FL',dome:true,lat:25.78},
+  'brewers':{full:'Milwaukee Brewers',abbr:'mil',espn:'mil',park:'American Family Field',city:'Milwaukee, WI',dome:false,lat:43.03},
+  'milwaukee brewers':{full:'Milwaukee Brewers',abbr:'mil',espn:'mil',park:'American Family Field',city:'Milwaukee, WI',dome:false,lat:43.03},
+  'twins':{full:'Minnesota Twins',abbr:'min',espn:'min',park:'Target Field',city:'Minneapolis, MN',dome:false,lat:44.98},
+  'minnesota twins':{full:'Minnesota Twins',abbr:'min',espn:'min',park:'Target Field',city:'Minneapolis, MN',dome:false,lat:44.98},
+  'mets':{full:'New York Mets',abbr:'nyn',espn:'nym',park:'Citi Field',city:'Queens, NY',dome:false,lat:40.76},
+  'new york mets':{full:'New York Mets',abbr:'nyn',espn:'nym',park:'Citi Field',city:'Queens, NY',dome:false,lat:40.76},
+  'yankees':{full:'New York Yankees',abbr:'nya',espn:'nyy',park:'Yankee Stadium',city:'Bronx, NY',dome:false,lat:40.83},
+  'new york yankees':{full:'New York Yankees',abbr:'nya',espn:'nyy',park:'Yankee Stadium',city:'Bronx, NY',dome:false,lat:40.83},
+  'athletics':{full:'Oakland Athletics',abbr:'oak',espn:'oak',park:'Oakland Coliseum',city:'Oakland, CA',dome:false,lat:37.75},
+  'oakland athletics':{full:'Oakland Athletics',abbr:'oak',espn:'oak',park:'Oakland Coliseum',city:'Oakland, CA',dome:false,lat:37.75},
+  'phillies':{full:'Philadelphia Phillies',abbr:'phi',espn:'phi',park:'Citizens Bank Park',city:'Philadelphia, PA',dome:false,lat:39.91},
+  'philadelphia phillies':{full:'Philadelphia Phillies',abbr:'phi',espn:'phi',park:'Citizens Bank Park',city:'Philadelphia, PA',dome:false,lat:39.91},
+  'pirates':{full:'Pittsburgh Pirates',abbr:'pit',espn:'pit',park:'PNC Park',city:'Pittsburgh, PA',dome:false,lat:40.45},
+  'pittsburgh pirates':{full:'Pittsburgh Pirates',abbr:'pit',espn:'pit',park:'PNC Park',city:'Pittsburgh, PA',dome:false,lat:40.45},
+  'padres':{full:'San Diego Padres',abbr:'sdn',espn:'sd',park:'Petco Park',city:'San Diego, CA',dome:false,lat:32.71},
+  'san diego padres':{full:'San Diego Padres',abbr:'sdn',espn:'sd',park:'Petco Park',city:'San Diego, CA',dome:false,lat:32.71},
+  'giants':{full:'San Francisco Giants',abbr:'sfn',espn:'sf',park:'Oracle Park',city:'San Francisco, CA',dome:false,lat:37.78},
+  'san francisco giants':{full:'San Francisco Giants',abbr:'sfn',espn:'sf',park:'Oracle Park',city:'San Francisco, CA',dome:false,lat:37.78},
+  'mariners':{full:'Seattle Mariners',abbr:'sea',espn:'sea',park:'T-Mobile Park',city:'Seattle, WA',dome:false,lat:47.59},
+  'seattle mariners':{full:'Seattle Mariners',abbr:'sea',espn:'sea',park:'T-Mobile Park',city:'Seattle, WA',dome:false,lat:47.59},
+  'cardinals':{full:'St. Louis Cardinals',abbr:'sln',espn:'stl',park:'Busch Stadium',city:'St. Louis, MO',dome:false,lat:38.62},
+  'st. louis cardinals':{full:'St. Louis Cardinals',abbr:'sln',espn:'stl',park:'Busch Stadium',city:'St. Louis, MO',dome:false,lat:38.62},
+  'st louis cardinals':{full:'St. Louis Cardinals',abbr:'sln',espn:'stl',park:'Busch Stadium',city:'St. Louis, MO',dome:false,lat:38.62},
+  'rays':{full:'Tampa Bay Rays',abbr:'tba',espn:'tb',park:'Tropicana Field',city:'St. Petersburg, FL',dome:true,lat:27.77},
+  'tampa bay rays':{full:'Tampa Bay Rays',abbr:'tba',espn:'tb',park:'Tropicana Field',city:'St. Petersburg, FL',dome:true,lat:27.77},
+  'rangers':{full:'Texas Rangers',abbr:'tex',espn:'tex',park:'Globe Life Field',city:'Arlington, TX',dome:true,lat:32.75},
+  'texas rangers':{full:'Texas Rangers',abbr:'tex',espn:'tex',park:'Globe Life Field',city:'Arlington, TX',dome:true,lat:32.75},
+  'blue jays':{full:'Toronto Blue Jays',abbr:'tor',espn:'tor',park:'Rogers Centre',city:'Toronto, ON',dome:true,lat:43.64},
+  'toronto blue jays':{full:'Toronto Blue Jays',abbr:'tor',espn:'tor',park:'Rogers Centre',city:'Toronto, ON',dome:true,lat:43.64},
+  'nationals':{full:'Washington Nationals',abbr:'was',espn:'wsh',park:'Nationals Park',city:'Washington, D.C.',dome:false,lat:38.87},
+  'washington nationals':{full:'Washington Nationals',abbr:'was',espn:'wsh',park:'Nationals Park',city:'Washington, D.C.',dome:false,lat:38.87},
+};
+
+function resolveTeam(input){
+  if(!input)return null;
+  return TEAM_DATA[input.toLowerCase().trim()]||null;
+}
+
+function logoURL(espnAbbr){
+  return`https://a.espncdn.com/i/teamlogos/mlb/500/${espnAbbr}.png`;
+}
+
+function updateHistLogo(inputId,imgId){
+  const val=document.getElementById(inputId)?.value||'';
+  const team=resolveTeam(val);
+  const img=document.getElementById(imgId);
+  if(!img)return;
+  if(team){img.src=logoURL(team.espn);img.style.display='block'}
+  else{img.src='';img.style.display='none'}
+}
+
+function estimateWeather(lat,month,dome){
+  if(dome)return{temp:72,condition:'Dome',wind:'N/A (indoors)'};
+  const h=new Date().getHours();
+  const isNight=h>=18||h<10;
+  const baseTemps={1:32,2:36,3:48,4:58,5:68,6:78,7:84,8:82,9:73,10:60,11:46,12:34};
+  let base=baseTemps[month]||68;
+  if(lat<35)base+=12;
+  else if(lat>45)base-=10;
+  const temp=base+Math.floor(Math.random()*8)-4;
+  let condition='Clear / Sunny';
+  if(isNight)condition='Night Game';
+  else if(temp<45)condition='Cold / Windy';
+  else if(temp>90)condition='Hot / Humid';
+  else if(month>=11||month<=2)condition='Cold / Windy';
+  const winds=['8mph out','12mph in','6mph cross','10mph out to CF','4mph in from LF','14mph out','Calm'];
+  const wind=winds[Math.floor(Math.random()*winds.length)];
+  return{temp,condition,wind};
+}
+
+const SB_KEY='sb151nnce4go9xhox7gvwr6';
 
 function autoFillHistory(){
-  const home=document.getElementById('h_home').value.trim();
-  const away=document.getElementById('h_away').value.trim();
+  const homeRaw=document.getElementById('h_home').value.trim();
+  const awayRaw=document.getElementById('h_away').value.trim();
   const date=document.getElementById('h_date').value;
-  if(!home||!away||!date){alert('Please enter Home Team, Away Team, and Date first.');return}
+  if(!homeRaw||!date){alert('Please enter at least the Home Team and Date.');return}
+
+  const homeTeam=resolveTeam(homeRaw);
+  const awayTeam=resolveTeam(awayRaw);
+  const dateObj=new Date(date+'T12:00:00');
+  const mo=dateObj.getMonth()+1;
+  const yr=dateObj.getFullYear();
+  const moStr=String(mo).padStart(2,'0');
+  const dyStr=String(dateObj.getDate()).padStart(2,'0');
+  const apiDate=`${yr}-${moStr}-${dyStr}`;
 
   const btn=document.getElementById('autoFillBtn');
   const loading=document.getElementById('h_loading');
   const filled=document.getElementById('h_filled');
-  btn.disabled=true;btn.textContent='Looking up...';
+  btn.disabled=true;
   loading.classList.remove('hidden');
   filled.classList.add('hidden');
+  document.getElementById('h_loading_msg').textContent='Fetching live game data...';
 
+  const msgs=['Fetching live game data...','Searching box scores...','Parsing stats...','Almost there...'];
   let mi=0;
-  loadTick=setInterval(()=>{
-    document.getElementById('h_loading_msg').textContent=LOAD_MSGS[mi%LOAD_MSGS.length];
-    mi++;
-  },1800);
+  const tick=setInterval(()=>{mi++;document.getElementById('h_loading_msg').textContent=msgs[mi%msgs.length]},1800);
 
-  const dateObj=new Date(date+'T12:00:00');
-  const dateStr=dateObj.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  fetch(`https://api.sportsblaze.com/mlb/v1/boxscores/daily/${apiDate}.json?key=${SB_KEY}`)
+    .then(r=>{if(!r.ok)throw new Error('API error '+r.status);return r.json()})
+    .then(data=>{
+      clearInterval(tick);
+      btn.disabled=false;loading.classList.add('hidden');
 
-  const prompt=`You are a baseball stats expert. A user attended this game in person: ${away} at ${home} on ${dateStr}.
+      const games=data.games||[];
+      if(!games.length){throw new Error('No games found for this date.')}
 
-Look up or recall from your training data the actual game result. Return ONLY a JSON object with these exact fields (no markdown, no explanation, just raw JSON):
+      const homeSearch=(homeTeam?homeTeam.full:homeRaw).toLowerCase();
+      const awaySearch=awayRaw?(awayTeam?awayTeam.full:awayRaw).toLowerCase():'';
 
-{
-  "homeScore": <integer>,
-  "awayScore": <integer>,
-  "stadium": "<stadium name>",
-  "city": "<city, state>",
-  "temp": <integer fahrenheit, estimate based on season/location if unknown>,
-  "condition": "<one of: Clear / Sunny, Partly Cloudy, Overcast, Light Rain, Rain Delay, Night Game, Cold / Windy, Hot / Humid, Dome>",
-  "wind": "<e.g. 12mph out to CF>",
-  "innings": {
-    "home": [<9 integers, runs per inning>],
-    "away": [<9 integers, runs per inning>]
-  },
-  "homeBatting": [
-    ["PlayerName", "AB", "R", "H", "RBI", "HR"],
-    ...up to 9 batters
-  ],
-  "awayBatting": [
-    ["PlayerName", "AB", "R", "H", "RBI", "HR"],
-    ...up to 9 batters
-  ],
-  "homePitching": [
-    ["PitcherName", "IP", "H", "R", "ER", "BB", "K"],
-    ...
-  ],
-  "awayPitching": [
-    ["PitcherName", "IP", "H", "R", "ER", "BB", "K"],
-    ...
-  ],
-  "notes": "<one interesting sentence about this game>"
-}
-
-If you don't know the exact box score, provide realistic estimates based on the final score. Always fill every field. Return only valid JSON.`;
-
-  fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:1000,
-      messages:[{role:'user',content:prompt}]
-    })
-  })
-  .then(r=>r.json())
-  .then(data=>{
-    clearInterval(loadTick);
-    btn.disabled=false;btn.textContent='✦ Auto-Fill Game Data';
-    loading.classList.add('hidden');
-
-    const raw=data.content.map(b=>b.text||'').join('');
-    const clean=raw.replace(/```json|```/g,'').trim();
-    const g=JSON.parse(clean);
-
-    document.getElementById('h_stadium').value=g.stadium||'';
-    document.getElementById('h_city').value=g.city||'';
-    document.getElementById('h_hs').value=g.homeScore!=null?g.homeScore:'';
-    document.getElementById('h_as').value=g.awayScore!=null?g.awayScore:'';
-    document.getElementById('h_temp').value=g.temp||'';
-    document.getElementById('h_wind').value=g.wind||'';
-    document.getElementById('h_notes').value=g.notes||'';
-    if(g.condition){document.getElementById('h_cond').value=g.condition}
-
-    document.getElementById('h_hbat_lbl').textContent=home+' Batting';
-    document.getElementById('h_abat_lbl').textContent=away+' Batting';
-    document.getElementById('h_hpit_lbl').textContent=home+' Pitching';
-    document.getElementById('h_apit_lbl').textContent=away+' Pitching';
-
-    if(g.homeBatting)document.getElementById('h_hbat').value=g.homeBatting.map(r=>r.join(',')).join('\n');
-    if(g.awayBatting)document.getElementById('h_abat').value=g.awayBatting.map(r=>r.join(',')).join('\n');
-    if(g.homePitching)document.getElementById('h_hpit').value=g.homePitching.map(r=>r.join(',')).join('\n');
-    if(g.awayPitching)document.getElementById('h_apit').value=g.awayPitching.map(r=>r.join(',')).join('\n');
-
-    buildLS('h_lsTable','h_home','h_away','hls');
-    if(g.innings&&g.innings.home){
-      ['home','away'].forEach(s=>{
-        const inns=(s==='home'?g.innings.home:g.innings.away)||[];
-        inns.forEach((v,i)=>{const el=document.getElementById(`hls_${s}_${i}`);if(el)el.value=v});
-        updLS('hls');
+      let game=games.find(g=>{
+        const h=g.teams.home.name.toLowerCase();
+        const a=g.teams.away.name.toLowerCase();
+        const homeMatch=h.includes(homeSearch)||homeSearch.includes(h.split(' ').slice(-1)[0].toLowerCase());
+        const awayMatch=!awaySearch||a.includes(awaySearch)||awaySearch.includes(a.split(' ').slice(-1)[0].toLowerCase());
+        return homeMatch&&awayMatch;
       });
+
+      if(!game){
+        game=games.find(g=>g.teams.home.name.toLowerCase().includes(homeSearch.split(' ').slice(-1)[0]));
+      }
+      if(!game)throw new Error(`Could not find ${homeRaw} home game on ${apiDate}. ${games.length} game(s) found that day.`);
+
+      const hName=game.teams.home.name;
+      const aName=game.teams.away.name;
+      const venue=game.venue||{};
+      const scores=game.scores||{};
+      const periods=scores.periods||[];
+      const total=scores.total||{};
+      const homeRuns=total.home?.runs??0;
+      const awayRuns=total.away?.runs??0;
+
+      document.getElementById('h_home').value=hName;
+      document.getElementById('h_away').value=aName;
+      document.getElementById('h_stadium').value=venue.name||homeTeam?.park||'';
+      document.getElementById('h_city').value=venue.location||homeTeam?.city||'';
+      document.getElementById('h_hs').value=homeRuns;
+      document.getElementById('h_as').value=awayRuns;
+
+      const wx=estimateWeather(homeTeam?.lat||35,mo,homeTeam?.dome||false);
+      document.getElementById('h_temp').value=wx.temp;
+      document.getElementById('h_cond').value=wx.condition;
+      document.getElementById('h_wind').value=wx.wind;
+
+      const resolvedHome=resolveTeam(hName)||homeTeam;
+      const resolvedAway=resolveTeam(aName)||awayTeam;
+      if(resolvedHome){
+        const hl=document.getElementById('h_filled_home_logo');
+        if(hl){hl.src=logoURL(resolvedHome.espn);hl.style.display='block'}
+        document.getElementById('h_hbat_lbl').textContent=hName+' Batting';
+        document.getElementById('h_hpit_lbl').textContent=hName+' Pitching';
+      }
+      if(resolvedAway){
+        const al=document.getElementById('h_filled_away_logo');
+        if(al){al.src=logoURL(resolvedAway.espn);al.style.display='block'}
+        document.getElementById('h_abat_lbl').textContent=aName+' Batting';
+        document.getElementById('h_apit_lbl').textContent=aName+' Pitching';
+      }
+
+      buildLS('h_lsTable','h_home','h_away','hls');
       const ht=document.getElementById('h_lsTable');
       if(ht){
         const rows=ht.querySelectorAll('tr');
-        if(rows[1])rows[1].querySelector('td').textContent=away.split(' ').slice(-1)[0];
-        if(rows[2])rows[2].querySelector('td').textContent=home.split(' ').slice(-1)[0];
+        if(rows[1])rows[1].querySelector('td').textContent=aName.split(' ').slice(-1)[0];
+        if(rows[2])rows[2].querySelector('td').textContent=hName.split(' ').slice(-1)[0];
       }
-    }
-    filled.classList.remove('hidden');
-    filled.scrollIntoView({behavior:'smooth',block:'nearest'});
-  })
-  .catch(err=>{
-    clearInterval(loadTick);
-    btn.disabled=false;btn.textContent='✦ Auto-Fill Game Data';
-    loading.classList.add('hidden');
-    alert('Could not look up game data. You can still fill in the details manually by clicking Auto-Fill again or entering them below.');
-    filled.classList.remove('hidden');
-  });
+      periods.forEach(p=>{
+        const i=p.number-1;
+        const hi=document.getElementById(`hls_home_${i}`);
+        const ai=document.getElementById(`hls_away_${i}`);
+        if(hi)hi.value=p.home?.runs??0;
+        if(ai)ai.value=p.away?.runs??0;
+      });
+      updLS('hls');
+
+      const rosters=game.rosters||{};
+      const homePlayers=rosters.home||[];
+      const awayPlayers=rosters.away||[];
+
+      function extractBatting(players){
+        return players
+          .filter(p=>p.stats&&(p.stats.batting_at_bats>0||p.stats.batting_base_on_balls>0))
+          .sort((a,b)=>(b.stats.batting_at_bats||0)-(a.stats.batting_at_bats||0))
+          .slice(0,9)
+          .map(p=>{
+            const s=p.stats;
+            return[
+              p.name,
+              s.batting_at_bats||0,
+              s.batting_runs||0,
+              s.batting_hits||0,
+              s.batting_rbi||0,
+              s.batting_home_runs||0
+            ].join(',');
+          }).join('\n');
+      }
+
+      function extractPitching(players){
+        return players
+          .filter(p=>p.stats&&p.stats.pitching_innings_pitched>0)
+          .sort((a,b)=>(b.stats.pitching_innings_pitched||0)-(a.stats.pitching_innings_pitched||0))
+          .map(p=>{
+            const s=p.stats;
+            const ip=s.pitching_innings_pitched||0;
+            return[
+              p.name,
+              ip.toFixed(1),
+              s.pitching_hits||0,
+              s.pitching_runs||0,
+              s.pitching_earned_runs||0,
+              s.pitching_base_on_balls||0,
+              s.pitching_strikeouts||0
+            ].join(',');
+          }).join('\n');
+      }
+
+      document.getElementById('h_hbat').value=extractBatting(homePlayers);
+      document.getElementById('h_abat').value=extractBatting(awayPlayers);
+      document.getElementById('h_hpit').value=extractPitching(homePlayers);
+      document.getElementById('h_apit').value=extractPitching(awayPlayers);
+
+      const dec=game.decisions||{};
+      const wp=dec.win?.name||'';
+      const lp=dec.loss?.name||'';
+      const noteStr=`W: ${wp||'—'} · L: ${lp||'—'}`;
+      document.getElementById('h_notes').value=noteStr;
+
+      filled.classList.remove('hidden');
+      filled.scrollIntoView({behavior:'smooth',block:'nearest'});
+    })
+    .catch(err=>{
+      clearInterval(tick);
+      btn.disabled=false;loading.classList.add('hidden');
+      const msg=err.message||'Unknown error';
+      if(msg.includes('Could not find')||msg.includes('No games')){
+        alert(msg+'\n\nThe form is open below — you can fill in details manually or try Baseball Reference.');
+      } else {
+        alert('Could not reach the stats API. Check your internet connection or try again.\n\nError: '+msg);
+      }
+      if(homeTeam){
+        document.getElementById('h_stadium').value=homeTeam.park;
+        document.getElementById('h_city').value=homeTeam.city;
+        const wx=estimateWeather(homeTeam.lat,mo,homeTeam.dome);
+        document.getElementById('h_temp').value=wx.temp;
+        document.getElementById('h_cond').value=wx.condition;
+        document.getElementById('h_wind').value=wx.wind;
+      }
+      buildLS('h_lsTable','h_home','h_away','hls');
+      filled.classList.remove('hidden');
+    });
 }
+
 
 function saveHistGame(){
   const home=document.getElementById('h_home').value.trim();
@@ -749,10 +929,14 @@ function gameCardHTML(g,showExpand){
   if(showExpand){
     foot.push(`<button class="expand-btn${hasAny?' has-data':''}" onclick="event.stopPropagation();toggleExpander(${g.id})">${hasAny?'Edit Box Score':'+ Add Box Score'}</button>`);
   }
+  const homeT=resolveTeam(g.home);
+  const awayT=resolveTeam(g.away);
+  const homeLogo=homeT?`<img src="${logoURL(homeT.espn)}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:4px" onerror="this.style.display='none'"/>`:'';
+  const awayLogo=awayT?`<img src="${logoURL(awayT.espn)}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:4px" onerror="this.style.display='none'"/>`:'';
   return `<div class="game-card${showExpand?'':' clickable'}" ${showExpand?'':` onclick="showDetail(${g.id})"`} id="gc_${g.id}">
     <div class="gc-top">
       <div class="badge ${bc}">${res}</div>
-      <div class="gi"><div class="gm">${g.away} @ ${g.home}</div><div class="gmt">${fmtDate(g.date)} · ${g.stadium||''}</div></div>
+      <div class="gi"><div class="gm">${awayLogo}${g.away} @ ${homeLogo}${g.home}</div><div class="gmt">${fmtDate(g.date)} · ${g.stadium||''}</div></div>
       <div class="gsa"><div class="gs ${sc}">${score}</div><div class="gw2">${g.condition||''}</div></div>
     </div>
     ${foot.length?`<div class="gc-foot">${foot.join('')}</div>`:''}
@@ -885,8 +1069,12 @@ function renderBucket(){
   if(q)parks=parks.filter(p=>p.name.toLowerCase().includes(q)||p.city.toLowerCase().includes(q)||p.teams.toLowerCase().includes(q));
   document.getElementById('bucketGrid').innerHTML=parks.map(p=>{
     const v=bucket[p.name];const c=cnt[p.name]||0;
+    const teamKey=p.teams.toLowerCase().split('/')[0].trim().replace('yomiuri ','');
+    const td=resolveTeam(teamKey)||resolveTeam(p.teams.toLowerCase().split(' ').slice(-1)[0]);
+    const logoHtml=td?`<img src="${logoURL(td.espn)}" style="width:28px;height:28px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'"/>`:`<div style="width:28px;height:28px;background:var(--chalk);border-radius:50%;flex-shrink:0"></div>`;
     return `<div class="bucket-card${v?' visited':''}" onclick="toggleBucket('${p.name.replace(/'/g,"\\'")}')">
       <div class="bc-check">${v?'✓':''}</div>
+      ${logoHtml}
       <div class="bc-info">
         <div class="bc-name">${p.name}</div>
         <div class="bc-team">${p.teams}</div>
@@ -939,9 +1127,13 @@ function showDetail(id){
     if(!p||!p.length)return'<p style="color:var(--muted);font-style:italic;font-size:13px;margin-top:6px">No pitching data — use History tab to add it.</p>';
     return`<table class="bs-tbl"><tr class="th-row"><td colspan="7">${t}</td></tr><tr><th>Pitcher</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>BB</th><th>K</th></tr>${p.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]||0}</td><td>${r[5]||0}</td><td>${r[6]||0}</td></tr>`).join('')}</table>`;
   }
+  const homeT=resolveTeam(g.home);
+  const awayT=resolveTeam(g.away);
+  const hLogoD=homeT?`<img src="${logoURL(homeT.espn)}" style="width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-right:8px" onerror="this.style.display='none'"/>`:'';
+  const aLogoD=awayT?`<img src="${logoURL(awayT.espn)}" style="width:36px;height:36px;object-fit:contain;vertical-align:middle;margin-right:8px" onerror="this.style.display='none'"/>`:'';
   document.getElementById('detailContent').innerHTML=`
     <div class="det-hdr"><div class="dh-d"></div>
-      <div class="det-teams">${g.away} @ ${g.home}</div>
+      <div class="det-teams">${aLogoD}${g.away} @ ${hLogoD}${g.home}</div>
       <div class="det-score">${g.awayScore}–${g.homeScore}</div>
       <div class="det-meta">${dateStr}${g.seat?' · '+g.seat:''}${g.isPast?' · Past Game':''}</div>
     </div>
