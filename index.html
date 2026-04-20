@@ -245,29 +245,55 @@ body{font-family:'Source Serif 4',Georgia,serif;background:var(--cream);color:va
 <div id="tab-history" class="hidden">
   <div class="form-card" style="margin-bottom:16px">
     <div class="fsec">Add Past Game</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;font-style:italic">Enter the home team, away team, and date — then hit <strong style="color:var(--green);font-style:normal">Auto-Fill Game Data</strong> and I'll look up the score, weather, stadium, and full box score automatically.</p>
     <div class="fr">
-      <div class="fg"><label>Home Team</label><input type="text" id="h_home" placeholder="Colorado Rockies"/></div>
-      <div class="fg"><label>Away Team</label><input type="text" id="h_away" placeholder="Chicago Cubs"/></div>
+      <div class="fg"><label>Home Team</label><input type="text" id="h_home" placeholder="Home Team"/></div>
+      <div class="fg"><label>Away Team</label><input type="text" id="h_away" placeholder="Away Team"/></div>
     </div>
     <div class="fr3">
       <div class="fg"><label>Date</label><input type="date" id="h_date"/></div>
-      <div class="fg"><label>Stadium</label><input type="text" id="h_stadium" placeholder="Coors Field"/></div>
-      <div class="fg"><label>City</label><input type="text" id="h_city" placeholder="Denver, CO"/></div>
+      <div class="fg"><label>Attended With</label><input type="text" id="h_with" placeholder=""/></div>
+      <div class="fg"><label>Seat / Section</label><input type="text" id="h_seat" placeholder=""/></div>
     </div>
-    <div class="fr3">
-      <div class="fg"><label>Home Score</label><input type="number" id="h_hs" placeholder="4" min="0"/></div>
-      <div class="fg"><label>Away Score</label><input type="number" id="h_as" placeholder="3" min="0"/></div>
-      <div class="fg"><label>Attended With</label><input type="text" id="h_with" placeholder="Tricia..."/></div>
-    </div>
-    <div class="fr3">
-      <div class="fg"><label>Temp (°F)</label><input type="number" id="h_temp" placeholder="72"/></div>
-      <div class="fg"><label>Condition</label><select id="h_cond"><option value="">Select...</option><option>Clear / Sunny</option><option>Partly Cloudy</option><option>Overcast</option><option>Light Rain</option><option>Rain Delay</option><option>Night Game</option><option>Cold / Windy</option><option>Hot / Humid</option><option>Dome</option></select></div>
-      <div class="fg"><label>Wind</label><input type="text" id="h_wind" placeholder="12mph out"/></div>
-    </div>
-    <div class="fr1"><div class="fg"><label>Notes</label><textarea id="h_notes" placeholder="What do you remember about this game?"></textarea></div></div>
-    <div class="btn-row">
+    <div class="btn-row" style="justify-content:flex-start;margin-top:4px;margin-bottom:0">
+      <button class="btn btn-p" id="autoFillBtn" onclick="autoFillHistory()">✦ Auto-Fill Game Data</button>
       <button class="btn btn-s" onclick="clearHistForm()">Clear</button>
-      <button class="btn btn-p" onclick="saveHistGame()">Add to History →</button>
+    </div>
+    <div id="h_loading" class="hidden" style="margin-top:14px;padding:12px 16px;background:var(--green-light);border-radius:8px;font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;color:var(--green);text-align:center">
+      <span id="h_loading_msg">Looking up game data...</span>
+    </div>
+    <div id="h_filled" class="hidden">
+      <div style="margin:16px 0 10px;padding:10px 14px;background:var(--green-light);border-radius:6px;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1px;color:var(--green)">✓ Game data filled in — review and edit anything below before saving.</div>
+      <div class="fr3">
+        <div class="fg"><label>Stadium</label><input type="text" id="h_stadium" placeholder=""/></div>
+        <div class="fg"><label>City</label><input type="text" id="h_city" placeholder=""/></div>
+        <div class="fg"><label>Home Score</label><input type="number" id="h_hs" placeholder="" min="0"/></div>
+      </div>
+      <div class="fr3">
+        <div class="fg"><label>Away Score</label><input type="number" id="h_as" placeholder="" min="0"/></div>
+        <div class="fg"><label>Temp (°F)</label><input type="number" id="h_temp" placeholder=""/></div>
+        <div class="fg"><label>Condition</label><select id="h_cond"><option value="">Select...</option><option>Clear / Sunny</option><option>Partly Cloudy</option><option>Overcast</option><option>Light Rain</option><option>Rain Delay</option><option>Night Game</option><option>Cold / Windy</option><option>Hot / Humid</option><option>Dome</option></select></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>Wind</label><input type="text" id="h_wind" placeholder=""/></div>
+        <div class="fg"><label>Notes</label><textarea id="h_notes" placeholder="" style="min-height:50px"></textarea></div>
+      </div>
+      <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:10px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border)">Line Score</div>
+      <div class="ls-wrap"><table class="ls-tbl" id="h_lsTable"></table></div>
+      <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:12px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border)">Batting (Name,AB,R,H,RBI,HR per line)</div>
+      <div class="fr">
+        <div class="fg"><label id="h_hbat_lbl">Home Batting</label><textarea id="h_hbat" style="min-height:90px"></textarea></div>
+        <div class="fg"><label id="h_abat_lbl">Away Batting</label><textarea id="h_abat" style="min-height:90px"></textarea></div>
+      </div>
+      <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:10px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border)">Pitching (Name,IP,H,R,ER,BB,K per line)</div>
+      <div class="fr">
+        <div class="fg"><label id="h_hpit_lbl">Home Pitching</label><textarea id="h_hpit" style="min-height:90px"></textarea></div>
+        <div class="fg"><label id="h_apit_lbl">Away Pitching</label><textarea id="h_apit" style="min-height:90px"></textarea></div>
+      </div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn btn-s" onclick="clearHistForm()">Clear</button>
+        <button class="btn btn-p" onclick="saveHistGame()">Save to History →</button>
+      </div>
     </div>
   </div>
   <div class="section-hdr">Games by Year</div>
@@ -532,25 +558,163 @@ function saveGame(){
   saveGames();clearForm();showTab('games');
 }
 
-function saveHistGame(){
+const LOAD_MSGS=['Looking up game data...','Searching box scores...','Checking the scorebook...','Almost there...'];
+let loadTick=null;
+
+function autoFillHistory(){
+  const home=document.getElementById('h_home').value.trim();
+  const away=document.getElementById('h_away').value.trim();
+  const date=document.getElementById('h_date').value;
+  if(!home||!away||!date){alert('Please enter Home Team, Away Team, and Date first.');return}
+
+  const btn=document.getElementById('autoFillBtn');
+  const loading=document.getElementById('h_loading');
+  const filled=document.getElementById('h_filled');
+  btn.disabled=true;btn.textContent='Looking up...';
+  loading.classList.remove('hidden');
+  filled.classList.add('hidden');
+
+  let mi=0;
+  loadTick=setInterval(()=>{
+    document.getElementById('h_loading_msg').textContent=LOAD_MSGS[mi%LOAD_MSGS.length];
+    mi++;
+  },1800);
+
+  const dateObj=new Date(date+'T12:00:00');
+  const dateStr=dateObj.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+  const prompt=`You are a baseball stats expert. A user attended this game in person: ${away} at ${home} on ${dateStr}.
+
+Look up or recall from your training data the actual game result. Return ONLY a JSON object with these exact fields (no markdown, no explanation, just raw JSON):
+
+{
+  "homeScore": <integer>,
+  "awayScore": <integer>,
+  "stadium": "<stadium name>",
+  "city": "<city, state>",
+  "temp": <integer fahrenheit, estimate based on season/location if unknown>,
+  "condition": "<one of: Clear / Sunny, Partly Cloudy, Overcast, Light Rain, Rain Delay, Night Game, Cold / Windy, Hot / Humid, Dome>",
+  "wind": "<e.g. 12mph out to CF>",
+  "innings": {
+    "home": [<9 integers, runs per inning>],
+    "away": [<9 integers, runs per inning>]
+  },
+  "homeBatting": [
+    ["PlayerName", "AB", "R", "H", "RBI", "HR"],
+    ...up to 9 batters
+  ],
+  "awayBatting": [
+    ["PlayerName", "AB", "R", "H", "RBI", "HR"],
+    ...up to 9 batters
+  ],
+  "homePitching": [
+    ["PitcherName", "IP", "H", "R", "ER", "BB", "K"],
+    ...
+  ],
+  "awayPitching": [
+    ["PitcherName", "IP", "H", "R", "ER", "BB", "K"],
+    ...
+  ],
+  "notes": "<one interesting sentence about this game>"
+}
+
+If you don't know the exact box score, provide realistic estimates based on the final score. Always fill every field. Return only valid JSON.`;
+
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      messages:[{role:'user',content:prompt}]
+    })
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    clearInterval(loadTick);
+    btn.disabled=false;btn.textContent='✦ Auto-Fill Game Data';
+    loading.classList.add('hidden');
+
+    const raw=data.content.map(b=>b.text||'').join('');
+    const clean=raw.replace(/```json|```/g,'').trim();
+    const g=JSON.parse(clean);
+
+    document.getElementById('h_stadium').value=g.stadium||'';
+    document.getElementById('h_city').value=g.city||'';
+    document.getElementById('h_hs').value=g.homeScore!=null?g.homeScore:'';
+    document.getElementById('h_as').value=g.awayScore!=null?g.awayScore:'';
+    document.getElementById('h_temp').value=g.temp||'';
+    document.getElementById('h_wind').value=g.wind||'';
+    document.getElementById('h_notes').value=g.notes||'';
+    if(g.condition){document.getElementById('h_cond').value=g.condition}
+
+    document.getElementById('h_hbat_lbl').textContent=home+' Batting';
+    document.getElementById('h_abat_lbl').textContent=away+' Batting';
+    document.getElementById('h_hpit_lbl').textContent=home+' Pitching';
+    document.getElementById('h_apit_lbl').textContent=away+' Pitching';
+
+    if(g.homeBatting)document.getElementById('h_hbat').value=g.homeBatting.map(r=>r.join(',')).join('\n');
+    if(g.awayBatting)document.getElementById('h_abat').value=g.awayBatting.map(r=>r.join(',')).join('\n');
+    if(g.homePitching)document.getElementById('h_hpit').value=g.homePitching.map(r=>r.join(',')).join('\n');
+    if(g.awayPitching)document.getElementById('h_apit').value=g.awayPitching.map(r=>r.join(',')).join('\n');
+
+    buildLS('h_lsTable','h_home','h_away','hls');
+    if(g.innings&&g.innings.home){
+      ['home','away'].forEach(s=>{
+        const inns=(s==='home'?g.innings.home:g.innings.away)||[];
+        inns.forEach((v,i)=>{const el=document.getElementById(`hls_${s}_${i}`);if(el)el.value=v});
+        updLS('hls');
+      });
+      const ht=document.getElementById('h_lsTable');
+      if(ht){
+        const rows=ht.querySelectorAll('tr');
+        if(rows[1])rows[1].querySelector('td').textContent=away.split(' ').slice(-1)[0];
+        if(rows[2])rows[2].querySelector('td').textContent=home.split(' ').slice(-1)[0];
+      }
+    }
+    filled.classList.remove('hidden');
+    filled.scrollIntoView({behavior:'smooth',block:'nearest'});
+  })
+  .catch(err=>{
+    clearInterval(loadTick);
+    btn.disabled=false;btn.textContent='✦ Auto-Fill Game Data';
+    loading.classList.add('hidden');
+    alert('Could not look up game data. You can still fill in the details manually by clicking Auto-Fill again or entering them below.');
+    filled.classList.remove('hidden');
+  });
+}
+
+
   const home=document.getElementById('h_home').value.trim();
   const away=document.getElementById('h_away').value.trim();
   const date=document.getElementById('h_date').value;
   if(!home||!away||!date){alert('Please fill in Home Team, Away Team, and Date.');return}
+  const inn={home:[],away:[]};
+  for(let i=0;i<9;i++){
+    inn.home.push(parseInt(document.getElementById(`hls_home_${i}`)?.value||'0')||0);
+    inn.away.push(parseInt(document.getElementById(`hls_away_${i}`)?.value||'0')||0);
+  }
+  const hsFromLS=inn.home.reduce((a,b)=>a+b,0);
+  const asFromLS=inn.away.reduce((a,b)=>a+b,0);
+  const hsField=parseInt(document.getElementById('h_hs')?.value)||0;
+  const asField=parseInt(document.getElementById('h_as')?.value)||0;
   games.push({
     id:Date.now(),home,away,date,
-    stadium:document.getElementById('h_stadium').value.trim(),
-    city:document.getElementById('h_city').value.trim(),
-    seat:'',
-    with:document.getElementById('h_with').value.trim(),
-    homeScore:parseInt(document.getElementById('h_hs').value)||0,
-    awayScore:parseInt(document.getElementById('h_as').value)||0,
-    temp:document.getElementById('h_temp').value?parseInt(document.getElementById('h_temp').value):null,
-    condition:document.getElementById('h_cond').value,
-    wind:document.getElementById('h_wind').value.trim(),
-    innings:{home:[],away:[]},
-    homeBatting:[],awayBatting:[],homePitching:[],awayPitching:[],
-    notes:document.getElementById('h_notes').value.trim(),
+    stadium:document.getElementById('h_stadium')?.value.trim()||'',
+    city:document.getElementById('h_city')?.value.trim()||'',
+    seat:document.getElementById('h_seat')?.value.trim()||'',
+    with:document.getElementById('h_with')?.value.trim()||'',
+    homeScore:hsFromLS>0?hsFromLS:hsField,
+    awayScore:asFromLS>0?asFromLS:asField,
+    temp:document.getElementById('h_temp')?.value?parseInt(document.getElementById('h_temp').value):null,
+    condition:document.getElementById('h_cond')?.value||'',
+    wind:document.getElementById('h_wind')?.value.trim()||'',
+    innings:inn,
+    homeBatting:parseCSV(document.getElementById('h_hbat')?.value||''),
+    awayBatting:parseCSV(document.getElementById('h_abat')?.value||''),
+    homePitching:parseCSV(document.getElementById('h_hpit')?.value||''),
+    awayPitching:parseCSV(document.getElementById('h_apit')?.value||''),
+    notes:document.getElementById('h_notes')?.value.trim()||'',
     isPast:true
   });
   saveGames();clearHistForm();renderHistory();
@@ -561,8 +725,11 @@ function clearForm(){
   document.getElementById('f_cond').value='';buildLS('lsTable','f_home','f_away','ls');
 }
 function clearHistForm(){
-  ['h_home','h_away','h_date','h_stadium','h_city','h_hs','h_as','h_with','h_temp','h_wind','h_notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
-  document.getElementById('h_cond').value='';
+  ['h_home','h_away','h_date','h_with','h_seat','h_stadium','h_city','h_hs','h_as','h_temp','h_wind','h_notes','h_hbat','h_abat','h_hpit','h_apit'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
+  const hc=document.getElementById('h_cond');if(hc)hc.value='';
+  const btn=document.getElementById('autoFillBtn');if(btn){btn.disabled=false;btn.textContent='✦ Auto-Fill Game Data'}
+  document.getElementById('h_filled')?.classList.add('hidden');
+  document.getElementById('h_loading')?.classList.add('hidden');
 }
 
 function gameCardHTML(g,showExpand){
